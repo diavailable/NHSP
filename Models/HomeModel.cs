@@ -1,4 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace NHSP.Models
 {
@@ -8,7 +10,7 @@ namespace NHSP.Models
         {
 
         }
-        public DbSet<HomeModel> Dataset { get; set; }
+        public DbSet<> Dataset { get; set; }
 
         public string? RequestId { get; set; }
 
