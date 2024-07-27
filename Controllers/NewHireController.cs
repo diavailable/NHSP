@@ -30,12 +30,7 @@ namespace NHSP.Controllers
             _logger = logger;
         }
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Login()
-        {
-            return View();
-        }
-
-        public IActionResult Privacy()
+        public IActionResult Dashboard()
         {
             return View();
         }
