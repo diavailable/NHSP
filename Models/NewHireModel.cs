@@ -5,7 +5,7 @@ namespace NHSP.Models
     public class NewHireModel : DbContext
     {
         public NewHireModel(DbContextOptions<NewHireModel> options) : base(options)
-        {
+    {
 
         }
         public DbSet<NewHireModel> Dataset { get; set; }
