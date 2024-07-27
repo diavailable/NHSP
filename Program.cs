@@ -14,8 +14,10 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
 });
 
-builder.Services.AddDbContext<NewHireModel>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddDbContext<DatabaseContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("portestConnection")));
+builder.Services.AddDbContext<LoginContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("pcgConnection")));
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 

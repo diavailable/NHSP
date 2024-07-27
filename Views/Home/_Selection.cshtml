@@ -1,0 +1,22 @@
+﻿@model UsersModel
+@{
+    Layout = null;
+}
+<h3>WELOCOME @Model.Code</h3>
+<p>select system to use</p>
+<div>
+    <div class="form-group">
+        <form>
+            <p>@Model.Code @Model.UserName @Model.Password</p>
+            <input type="hidden" value="@Model.Code"/>
+            <input type="hidden" value="@Model.UserName"/>
+            <input type="hidden" value="@Model.Password" />
+            <button id="newhire" asp-controller="NewHire" asp-action="DashNewHire" type="button" value="SALARY/NEW HIRE" class="btn btn-primary btn-block" />
+        </form>
+    </div>
+    <div class="form-group">
+        <form>
+        <button id="payroll" asp-controller="Payroll" asp-action="DashPayroll" type="button" value="PAYROLL" class="btn btn-primary btn-block" />
+        </form>
+    </div>
+</div>
