@@ -1,6 +1,6 @@
 ﻿namespace NHSP.Formula
 {
-    public class Class
+    public class PayrollFormula
     {
     }
 }
