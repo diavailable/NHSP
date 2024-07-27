@@ -38,6 +38,6 @@ namespace NHSP.Controllers
         public IActionResult Privacy()
         {
             return View();
-        }      
+        }
     }
 }
