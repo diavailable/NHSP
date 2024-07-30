@@ -86,4 +86,14 @@ namespace NHSP.Models
         public string Status { get; set; }
         public string With_OM {get; set; }
     }
+    public class site
+    {
+        [Key]
+        public int site_id { get; set; }
+        public string site_name{ get; set; }
+        public string client_name { get; set; }
+        public string om { get; set; }
+        public string status { get; set; }
+
+    }
 }

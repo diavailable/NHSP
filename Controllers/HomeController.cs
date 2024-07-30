@@ -26,7 +26,7 @@ namespace NHSP.Controllers
 {
     public class HomeController : Controller
     {
-        private readonly LoginContext _context1;
+        private readonly PCGContext _context1;
         private readonly DatabaseContext _context2;
         const string SessionName = "_Name";
         const string SessionLayout = "_Layout";
@@ -37,7 +37,7 @@ namespace NHSP.Controllers
         public SqlCommand cmd;
         private readonly IConfiguration _configuration;
 
-        public HomeController(IConfiguration configuration, LoginContext context1, DatabaseContext context2)
+        public HomeController(IConfiguration configuration, PCGContext context1, DatabaseContext context2)
         {
             _configuration = configuration;
             con = new SqlConnection(_configuration.GetConnectionString("portestConnection"));
@@ -83,6 +83,7 @@ namespace NHSP.Controllers
                 if (result != null)
                 {
                     HttpContext.Session.SetString(SessionType, result.Code);
+                    HttpContext.Session.SetString(SessionId, result.id.ToString());
                     var usermodel = new UsersModel
                     {
                         UserName = result.Username,

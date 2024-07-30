@@ -1,0 +1,52 @@
+﻿
+@{
+    ViewBag.Title = "Hires";
+}
+<div class="container mt-4">
+    <h1></h1>
+    <h1></h1>
+
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Site</th>
+                    <th>File</th>
+                    <th>Approved by</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var hire in Model)
+                {
+                    <tr data-toggle="collapse" data-target="#details-@hire.HireId" class="clickable-row">
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                    <tr id="" class="">
+                        <td colspan="4">
+                            <div class="card card-body">
+  
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Bootstrap JS and dependencies -->
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+<script>
+    // Optional: Add custom JavaScript if needed
+    document.querySelectorAll('.clickable-row').forEach(row => {
+        row.addEventListener('click', () => {
+            const target = row.getAttribute('data-target');
+            const details = document.querySelector(target);
+            details.classList.toggle('collapse');
+        });
+    });
+</script>

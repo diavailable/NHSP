@@ -4,10 +4,19 @@ using Microsoft.Extensions.Hosting;
 using NHSP.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
+using System;
+using NHSP.Formula;
+using Microsoft.AspNetCore.Hosting;
+using System.IO;
 
 var builder = WebApplication.CreateBuilder(args);
 //Session
 builder.Services.AddDistributedMemoryCache();
+builder.Services.AddControllersWithViews()
+    .AddRazorOptions(options =>
+    {
+        options.ViewLocationFormats.Add("/Views/Shared/{0}.cshtml");
+    });
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromMinutes(30); // Set session timeout
@@ -17,8 +26,11 @@ builder.Services.AddSession(options =>
 
 builder.Services.AddDbContext<DatabaseContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("portestConnection")));
-builder.Services.AddDbContext<LoginContext>(options =>
+builder.Services.AddDbContext<PCGContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("pcgConnection")));
+
+var uploadPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "PayrollFiles");
+builder.Services.AddSingleton(new FileUploadService(uploadPath));
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
