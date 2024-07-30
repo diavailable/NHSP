@@ -2,21 +2,24 @@
 @{
     Layout = null;
 }
-<h3>WELOCOME @Model.Code</h3>
-<p>select system to use</p>
-<div>
-    <div class="form-group">
-        <form>
-            <p>@Model.Code @Model.UserName @Model.Password</p>
-            <input type="hidden" value="@Model.Code"/>
-            <input type="hidden" value="@Model.UserName"/>
-            <input type="hidden" value="@Model.Password" />
-            <button id="newhire" asp-controller="NewHire" asp-action="DashNewHire" type="button" value="SALARY/NEW HIRE" class="btn btn-primary btn-block" />
-        </form>
+<div class="container mt-5">
+    <div class="text-center mb-4">
+        <h3>WELCOME @Model.Code</h3>
+        <p>Select system to use</p>
     </div>
     <div class="form-group">
-        <form>
-        <button id="payroll" asp-controller="Payroll" asp-action="DashPayroll" type="button" value="PAYROLL" class="btn btn-primary btn-block" />
-        </form>
+        <a href="@Url.Action("DashNewHire", "NewHire")" class="btn btn-primary btn-block mb-3">
+            New Hire Approval
+        </a>
+    </div>
+    <div class="form-group">
+        <a href="@Url.Action("DashSalaryAdjustment", "NewHire")" class="btn btn-secondary btn-block mb-3">
+            Salary Adjustment Approval
+        </a>
+    </div>
+    <div class="form-group">
+        <a href="@Url.Action("DashPayroll", "NewHire")" class="btn btn-success btn-block">
+            Payroll Approval
+        </a>
     </div>
 </div>
