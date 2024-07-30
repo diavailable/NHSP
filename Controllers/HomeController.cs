@@ -56,45 +56,28 @@ namespace NHSP.Controllers
         
         public IActionResult Login()
         {
-            string session = HttpContext.Session.GetString(SessionType);
-
-            if (session != null)
-            {
-                if (session == "Admin")
-                {
-                    return RedirectToAction("Index", "Admin");
-                }
-                if (session == "User")
-                {
-                    return RedirectToAction("Index", "User");
-                }
-                else
-                {
-                    return RedirectToAction("Index", session);
-                }
-            }
             return View();
         }
         [HttpPost]
         public IActionResult Selection(LoginModel m)
         {
-            if (con.State == ConnectionState.Closed)
-            {
-                con.Open();
-            }
             if (ModelState.IsValid)
             {
+                if (con.State == ConnectionState.Closed)
+                {
+                    con.Open();
+                }
                 var query = from u in _context2.tbl_users
-                              join c in _context2.tbl_contents on u.User_Type equals c.id into uc
-                              from c in uc.DefaultIfEmpty()
-                              where u.Username == m.Username && u.Password == m.Password
-                              select new
-                              {
-                                  u.id,
-                                  u.Username,
-                                  u.Password,
-                                  Code = c.Code
-                              };
+                            join c in _context2.tbl_contents on u.User_Type equals c.id into uc
+                            from c in uc.DefaultIfEmpty()
+                            where u.Username == m.Username && u.Password == m.Password
+                            select new
+                            {
+                                u.id,
+                                u.Username,
+                                u.Password,
+                                Code = c.Code
+                            };
                 var result = query.FirstOrDefault();
 
                 if (result != null)
@@ -106,14 +89,15 @@ namespace NHSP.Controllers
                         Password = result.Password,
                         Code = result.Code
                     };
-                    if (result.Code == "DMN")
-                    {
-                        return PartialView("_Selection", usermodel);
-                    }
+                    return PartialView("_Selection", usermodel);
                 }
-                ModelState.AddModelError("Username", "Username / Password is incorrect.");
+                else
+                {
+                    ModelState.AddModelError("Username", "Username / Password is incorrect.");
+                    return View(m);
+                }
             }
-            return View();
+            return View(m);
         }
     }
 }
