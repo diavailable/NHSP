@@ -96,29 +96,22 @@ namespace NHSP.Controllers
                                   Code = c.Code
                               };
                 var result = query.FirstOrDefault();
-                var code = result.Code;
 
-                HttpContext.Session.SetString(SessionType, code);
-
-                var usermodel = new UsersModel
+                if (result != null)
                 {
-                    UserName = result.Username,
-                    Password = result.Password, 
-                    Code = code
-                };
-                if (code != null)
-                {
-                    if (code == "DMN")
+                    HttpContext.Session.SetString(SessionType, result.Code);
+                    var usermodel = new UsersModel
+                    {
+                        UserName = result.Username,
+                        Password = result.Password,
+                        Code = result.Code
+                    };
+                    if (result.Code == "DMN")
                     {
                         return PartialView("_Selection", usermodel);
                     }
                 }
-                else
-                {
-                    // Logic for unsuccessful login
-                    ModelState.AddModelError("Username", "Username / Password is incorrect.");
-                    return PartialView("_Selection", usermodel);
-                }
+                ModelState.AddModelError("Username", "Username / Password is incorrect.");
             }
             return View();
         }
