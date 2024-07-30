@@ -34,5 +34,15 @@ namespace NHSP.Controllers
         {
             return View();
         }
+
+        public IActionResult DashSalaryAdjustment()
+        {
+            return View();
+        }
+        public IActionResult DashPayroll()
+        {
+            return View();
+        }
+
     }
 }

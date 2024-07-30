@@ -5,9 +5,16 @@ using NHSP.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 
+
+
 var builder = WebApplication.CreateBuilder(args);
 //Session
 builder.Services.AddDistributedMemoryCache();
+builder.Services.AddControllersWithViews()
+    .AddRazorOptions(options =>
+    {
+        options.ViewLocationFormats.Add("/Views/Shared/{0}.cshtml");
+    });
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromMinutes(30); // Set session timeout
