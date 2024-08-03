@@ -19,6 +19,7 @@ using System.ComponentModel;
 using System.Linq;
 using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 using System.IO;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace NHSP.Controllers
 {
@@ -31,14 +32,16 @@ namespace NHSP.Controllers
         const string SessionType = "_Type";
         const string SessionId = "_Id";
 
-        public SqlConnection con;
+        public SqlConnection con1;
+        public SqlConnection con2;
         public SqlCommand cmd;
         private readonly IConfiguration _configuration;
         private readonly FileUploadService _fileUploadPayroll;
         public PayrollController(IConfiguration configuration, PCGContext context1, DatabaseContext context2, FileUploadService fileUploadPayroll)
         {
             _configuration = configuration;
-            con = new SqlConnection(_configuration.GetConnectionString("portestConnection"));
+            con1 = new SqlConnection(_configuration.GetConnectionString("pcgConnection"));
+            con2 = new SqlConnection(_configuration.GetConnectionString("portestConnection"));
             _context1 = context1;
             _context2 = context2;
             _fileUploadPayroll = fileUploadPayroll;
@@ -71,23 +74,28 @@ namespace NHSP.Controllers
             ViewBag.Layout = "Payroll";
             ViewBag.SessionType = HttpContext.Session.GetString(SessionType);
 
-            var sitequery = _context1.site
-                            .Select(s => new
-                             {
-                                 s.site_id,
-                                 s.site_name,
-                                 s.client_name,
-                                 s.om,
-                                 s.status
-                             })
-                             .ToList();
+            var sitequery = from u in _context2.tbl_users
+                            join c in _context2.tbl_contents
+                            on u.id equals c.WithOM into userContents
+                            from c in userContents.DefaultIfEmpty()
+                            where c != null
+                            select new
+                            {
+                                UserId = u.id,
+                                u.First_Name,
+                                u.Last_Name,
+                                SiteId = c.id,
+                                SiteName = c != null ? c.Item_Details : null,
+                                Status = c != null ? c.Status : (int?)null,
+                                WithOM = c != null ? c.WithOM : (int?)null
+                            };
 
-            ViewBag.Site = sitequery;
+            ViewBag.Site = sitequery.ToList();
 
             return View();
         }
         [HttpPost]
-        public async Task<IActionResult> Upload(FileModel pm, int SiteId)
+        public async Task<IActionResult> Upload(FileModel pm, int siteId)
         {
             try
             {
@@ -112,19 +120,25 @@ namespace NHSP.Controllers
                     return PartialView("_UploadPartial", pm);
                 }
 
-                var site = _context1.site
-                    .Where(s => s.site_id == SiteId)
-                    .Select(s => new
-                    {
-                        s.site_id,
-                        s.site_name,
-                        s.client_name,
-                        s.om,
-                        s.status
-                    })
-                    .FirstOrDefault();
+                var sitequery = from u in _context2.tbl_users
+                                join c in _context2.tbl_contents
+                                on u.id equals c.WithOM into userContents
+                                from c in userContents.DefaultIfEmpty()
+                                where c != null && c.id == siteId
+                                select new
+                                {
+                                    UserId = u.id,
+                                    u.First_Name,
+                                    u.Last_Name,
+                                    SiteId = c.id,
+                                    SiteName = c != null ? c.Item_Details : null,
+                                    Status = c != null ? c.Status : (int?)null,
+                                    WithOM = c != null ? c.WithOM : (int?)null
+                                };
 
-                if (site == null)
+                var siteresult = sitequery.FirstOrDefault();
+
+                if (siteresult == null)
                 {
                     ModelState.AddModelError("SiteId", "Invalid site ID.");
                     return PartialView("_UploadPartial", pm);
@@ -140,17 +154,65 @@ namespace NHSP.Controllers
                     fileformat = pm.UploadFile.FileName;
                 }
 
-                pm.FileName = "_" + site.site_id + "_" + ViewBag.SessionId + Path.GetExtension(fileformat);
-                var filePath = await _fileUploadPayroll.UploadFileAsync(pm.UploadFile, pm.FileName);
+                pm.FileName = "_" + siteresult.SiteId + "_" + ViewBag.SessionId + Path.GetExtension(fileformat);
+                var (filePath, rawfilename) = await _fileUploadPayroll.UploadFileAsync(pm.UploadFile, pm.FileName);
+
+                DateTime dt = DateTime.Now;
+                string fdt = dt.ToString("dd-MM-yyyy HH:mm:ss");
+                string filedir = filePath;
+                string fname = rawfilename;
+                string sitename = StringEdit.RightStr(siteresult.SiteName);
+                if (con1.State == ConnectionState.Closed)
+                {
+                    con1.Open();
+                }
+                using (cmd = new SqlCommand("INSERT INTO PayrollFile (FileName, FileString, Site, Addedby, AddedDate) " +
+                                            "VALUES (@FileName, @FileString, @Site, @Addedby, @AddedDate)", con1))
+                {
+                    cmd.Parameters.AddWithValue("@FileName", fname);
+                    cmd.Parameters.AddWithValue("@FileString", filedir);
+                    cmd.Parameters.AddWithValue("@Site", sitename);
+                    cmd.Parameters.AddWithValue("@AddedBy", $"{siteresult.First_Name} {siteresult.Last_Name}");
+                    cmd.Parameters.AddWithValue("@AddedDate", fdt);
+                }
+                cmd.ExecuteNonQuery();
+                if (con1.State == ConnectionState.Open)
+                {
+                    con1.Close();
+                }
 
                 if (!string.IsNullOrEmpty(filePath))
-                {
+                {                    
+                    /*
+                        var newContent = new PayrollFile
+                        {
+                            FileName = pm.FileName,
+                            FileString = filedir,
+                            Site = siteresult.SiteName,
+                            AddedBy = $"{siteresult.First_Name} {siteresult.Last_Name}",
+                            AddedDate = fdt,
+
+                            ApproveOM = null,
+                            ApproveOMDate = null,
+                            ApproveSOM = null,
+                            ApproveSOMDate = null,
+                            ApproveIM = null,
+                            ApproveIMDate = null,
+                            ApproveACC = null,
+                            ApproveACCDate = null,
+                            Release = null
+                        };
+                    
+                    _context1.PayrollFile.Add(newContent);
+                    await _context1.SaveChangesAsync();
+                    */
                     ModelState.Clear();
                     ViewBag.SuccessMessage = "Uploaded successfully.";
                 }
                 else
                 {
                     ModelState.AddModelError("UploadFile", "File upload failed.");
+                    return PartialView("_UploadPartial", pm);
                 }
 
                 return PartialView("_UploadPartial", pm);
@@ -173,22 +235,27 @@ namespace NHSP.Controllers
             ViewBag.Layout = "Payroll";
             ViewBag.SessionType = HttpContext.Session.GetString(SessionType);
 
-            var sitequery = _context1.site
-                            .Where(s => s.site_id == SiteId)
-                            .Select(s => new
+            var sitequery = from u in _context2.tbl_users
+                            join c in _context2.tbl_contents
+                            on u.id equals c.WithOM into userContents
+                            from c in userContents.DefaultIfEmpty()
+                            where c != null && c.id == SiteId
+                            select new
                             {
-                                s.site_id,
-                                s.site_name,
-                                s.client_name,
-                                s.om,
-                                s.status
-                            })
-                            .ToList();
+                                UserId = u.id,
+                                u.First_Name,
+                                u.Last_Name,
+                                SiteId = c.id,
+                                SiteName = c != null ? c.Item_Details : null,
+                                Status = c != null ? c.Status : (int?)null,
+                                WithOM = c != null ? c.WithOM : (int?)null
+                            };
+                            
             var siteresult = sitequery.FirstOrDefault();
 
             var fm = new FileModel
             {
-                SiteId = siteresult?.site_id.ToString()
+                SiteId = siteresult?.SiteId.ToString()
             };
 
             return PartialView("_UploadPartial", fm);

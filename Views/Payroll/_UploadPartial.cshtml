@@ -5,6 +5,7 @@
     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 </div>
 <div class="modal-body">
+    <h1>@Model.SiteId</h1>
     <form id="uploadForm" method="post" enctype="multipart/form-data" action="/Payroll/Upload">
         <input type="hidden" name="SiteId" value="@Model.SiteId" />
         <div class="mb-3">

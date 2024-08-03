@@ -9,9 +9,8 @@ namespace NHSP.Models
         public PCGContext(DbContextOptions<PCGContext> options) : base(options)
         {
         }
-
-        public DbSet<tbl_usersModel> tbl_users { get; set; }
         public DbSet<site> site { get; set; }
+        public DbSet<PayrollFile> PayrollFile { get; set; }
     }
 
 }

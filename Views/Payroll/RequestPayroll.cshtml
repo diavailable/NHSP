@@ -18,14 +18,17 @@
         </tr>
     </thead>
     <tbody>
-        @foreach (var site in ViewBag.Site)
+        @if (ViewBag.Site != null)
+        {
+        foreach (var site in ViewBag.Site)
         {
             <tr>
-                <td class="text-center text-nowrap">@site.site_name @site.client_name</td>
+                <td class="text-center text-nowrap">@site.SiteName</td>
                 <td>
-                    <button type="submit" class="btn btn-primary" data-siteid="@site.site_id" id="showUpload_@site.site_id">Upload</button>
+                    <button type="submit" class="btn btn-primary" data-siteid="@site.SiteId" id="showUpload_@site.SiteId">Upload</button>
                 </td>
             </tr>
+        }
         }
     </tbody>
 </table>

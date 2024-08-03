@@ -55,7 +55,7 @@ namespace NHSP.Models
         public string ConfirmPassword { get; set; }
         public string UserName { get; set; }
     }
-    //test table model for live petty
+    // _context2 pettycash db _context2
     public class tbl_usersModel
     {
         [Key]
@@ -74,7 +74,6 @@ namespace NHSP.Models
         public string Contact_Number { get; set; }
         public string Email { get; set; }
         public string Id_Number { get; set; }
-        public tbl_contentsModel ContentsModel { get; set; }
     }
     public class tbl_contentsModel
     {
@@ -83,9 +82,10 @@ namespace NHSP.Models
         public string Code { get; set; }
         public string Item_Type { get; set; }
         public string Item_Details { get; set; }
-        public string Status { get; set; }
-        public string With_OM {get; set; }
+        public int Status { get; set; }
+        public int WithOM { get; set; }     
     }
+    // pcgdb newhire _context1
     public class site
     {
         [Key]
@@ -95,5 +95,24 @@ namespace NHSP.Models
         public string om { get; set; }
         public string status { get; set; }
 
+    }
+    public class PayrollFile
+    {
+        [Key]
+        public int FileId { get; set; }
+        public string FileName { get; set; }
+        public string FileString { get; set; }
+        public string Site { get; set; }
+        public string AddedBy { get; set; }
+        public string AddedDate { get; set; }
+        public string ApproveOM { get; set; }
+        public string ApproveOMDate { get;set; }
+        public string ApproveSOM { get; set; }
+        public string ApproveSOMDate { get; set; }
+        public string ApproveIM { get; set; }
+        public string ApproveIMDate { get; set; }
+        public string ApproveACC {  get; set; }
+        public string ApproveACCDate { get; set; }
+        public string Release { get; set; }
     }
 }

@@ -76,7 +76,7 @@ namespace NHSP.Controllers
                                 u.id,
                                 u.Username,
                                 u.Password,
-                                Code = c.Code
+                                c.Code
                             };
                 var result = query.FirstOrDefault();
 
