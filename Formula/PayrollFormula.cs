@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using System.IO;
 using System.Threading.Tasks;
 
@@ -42,6 +43,23 @@ namespace NHSP.Formula
             }
 
             return (filePath, customFileName);
+        }
+        public async Task<FileContentResult> DownloadFileAsync(string fileName)
+        {
+            var filePath = Path.Combine(_uploadPath, fileName);
+
+            if (!System.IO.File.Exists(filePath))
+            {
+                throw new FileNotFoundException("The file was not found.", fileName);
+            }
+
+            var fileBytes = await System.IO.File.ReadAllBytesAsync(filePath);
+            var contentType = "application/octet-stream"; // Default content type for files
+
+            return new FileContentResult(fileBytes, contentType)
+            {
+                FileDownloadName = fileName
+            };
         }
     }
     // string extract

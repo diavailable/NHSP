@@ -20,6 +20,9 @@ using System.Linq;
 using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 using System.IO;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
+using Microsoft.AspNetCore.Hosting.Server;
+using Microsoft.Extensions.Hosting.Internal;
+using System.Globalization;
 
 namespace NHSP.Controllers
 {
@@ -37,7 +40,9 @@ namespace NHSP.Controllers
         public SqlCommand cmd;
         private readonly IConfiguration _configuration;
         private readonly FileUploadService _fileUploadPayroll;
-        public PayrollController(IConfiguration configuration, PCGContext context1, DatabaseContext context2, FileUploadService fileUploadPayroll)
+        private readonly FileUploadService _fileUploadService;
+        private readonly IWebHostEnvironment _hostingEnvironment;
+        public PayrollController(IConfiguration configuration, IWebHostEnvironment hostingEnvironment, PCGContext context1, DatabaseContext context2, FileUploadService fileUploadPayroll)
         {
             _configuration = configuration;
             con1 = new SqlConnection(_configuration.GetConnectionString("pcgConnection"));
@@ -45,6 +50,8 @@ namespace NHSP.Controllers
             _context1 = context1;
             _context2 = context2;
             _fileUploadPayroll = fileUploadPayroll;
+            _hostingEnvironment = hostingEnvironment;
+            _fileUploadService = new FileUploadService(Path.Combine(_hostingEnvironment.WebRootPath, "Files"));
         }
 
         public void GetSession()
@@ -72,24 +79,31 @@ namespace NHSP.Controllers
                 return RedirectToAction("Login", "Home");
             }
             ViewBag.Layout = "Payroll";
-            ViewBag.SessionType = HttpContext.Session.GetString(SessionType);
 
-            var sitequery = from u in _context2.tbl_users
-                            join c in _context2.tbl_contents
-                            on u.id equals c.WithOM into userContents
-                            from c in userContents.DefaultIfEmpty()
-                            where c != null
-                            select new
-                            {
-                                UserId = u.id,
-                                u.First_Name,
-                                u.Last_Name,
-                                SiteId = c.id,
-                                SiteName = c != null ? c.Item_Details : null,
-                                Status = c != null ? c.Status : (int?)null,
-                                WithOM = c != null ? c.WithOM : (int?)null
-                            };
-
+              var sitequery = _context2.tbl_contents
+                              .Where(c => c.Item_Type == "Site" && c.Status == 1)
+                              .Select(c => new
+                              {
+                              SiteId = c.id,
+                              c.Code,
+                              c.Item_Type,
+                              SiteName = c.Item_Details,
+                              c.Status,
+                              c.WithOM
+                              });
+            /*
+            var sitequery = _context1.PayrollFile
+                .Select(c => new
+                {
+                    c.FileId,
+                    c.FileName,
+                    c.FileString,
+                    c.SiteId,
+                    c.SiteName,
+                    c.AddedBy,
+                    c.AddedDate,
+                });
+*/
             ViewBag.Site = sitequery.ToList();
 
             return View();
@@ -158,21 +172,23 @@ namespace NHSP.Controllers
                 var (filePath, rawfilename) = await _fileUploadPayroll.UploadFileAsync(pm.UploadFile, pm.FileName);
 
                 DateTime dt = DateTime.Now;
-                string fdt = dt.ToString("dd-MM-yyyy HH:mm:ss");
+                string fdt = dt.ToString("MM-dd-yyyy HH:mm:ss");
                 string filedir = filePath;
                 string fname = rawfilename;
                 string sitename = StringEdit.RightStr(siteresult.SiteName);
+                int sctk = int.Parse(HttpContext.Session.GetString(SessionId));
                 if (con1.State == ConnectionState.Closed)
                 {
                     con1.Open();
                 }
-                using (cmd = new SqlCommand("INSERT INTO PayrollFile (FileName, FileString, Site, Addedby, AddedDate) " +
-                                            "VALUES (@FileName, @FileString, @Site, @Addedby, @AddedDate)", con1))
+                using (cmd = new SqlCommand("INSERT INTO PayrollFile (FileName, FileString, SiteId, SiteName, Addedby, AddedDate) " +
+                                            "VALUES (@FileName, @FileString, @SiteId, @SiteName, @Addedby, @AddedDate)", con1))
                 {
                     cmd.Parameters.AddWithValue("@FileName", fname);
                     cmd.Parameters.AddWithValue("@FileString", filedir);
-                    cmd.Parameters.AddWithValue("@Site", sitename);
-                    cmd.Parameters.AddWithValue("@AddedBy", $"{siteresult.First_Name} {siteresult.Last_Name}");
+                    cmd.Parameters.AddWithValue("@SiteId", siteresult.SiteId);
+                    cmd.Parameters.AddWithValue("@SiteName", sitename);
+                    cmd.Parameters.AddWithValue("@AddedBy", sctk);
                     cmd.Parameters.AddWithValue("@AddedDate", fdt);
                 }
                 cmd.ExecuteNonQuery();
@@ -183,29 +199,6 @@ namespace NHSP.Controllers
 
                 if (!string.IsNullOrEmpty(filePath))
                 {                    
-                    /*
-                        var newContent = new PayrollFile
-                        {
-                            FileName = pm.FileName,
-                            FileString = filedir,
-                            Site = siteresult.SiteName,
-                            AddedBy = $"{siteresult.First_Name} {siteresult.Last_Name}",
-                            AddedDate = fdt,
-
-                            ApproveOM = null,
-                            ApproveOMDate = null,
-                            ApproveSOM = null,
-                            ApproveSOMDate = null,
-                            ApproveIM = null,
-                            ApproveIMDate = null,
-                            ApproveACC = null,
-                            ApproveACCDate = null,
-                            Release = null
-                        };
-                    
-                    _context1.PayrollFile.Add(newContent);
-                    await _context1.SaveChangesAsync();
-                    */
                     ModelState.Clear();
                     ViewBag.SuccessMessage = "Uploaded successfully.";
                 }
@@ -260,6 +253,233 @@ namespace NHSP.Controllers
 
             return PartialView("_UploadPartial", fm);
         }
+        public IActionResult ViewPayroll()
+        {
+            try
+            {
+                GetSession();
+                if (HttpContext.Session.GetString(SessionType) == null)
+                {
+                    return RedirectToAction("Login", "Home");
+                }
+                ViewBag.Layout = "Payroll";
+                string sestype = HttpContext.Session.GetString(SessionType);
+                int sesid = int.Parse(HttpContext.Session.GetString(SessionId));
+                var user = _context2.tbl_users
+                    .Where(u => u.User_Status == 1 && u.id == sesid)
+                    .Select(u => new
+                    {
+                        u.Position,
+                    })
+                    .FirstOrDefault();
+
+                if (user != null)
+                {
+                    if(sestype.Contains("OPE") && sestype.Contains("MAN"))
+                    {
+                        var payroll = _context1.PayrollFile
+                                   .Where(c => c.Status == null)
+                                   .Select(c => new
+                                   {
+                                       c.FileId,
+                                       c.FileName,
+                                       c.FileString,
+                                       c.SiteId,
+                                       c.SiteName,
+                                       c.AddedBy,
+                                       c.AddedDate,
+                                   });
+
+                        ViewBag.Approvals = payroll.ToList();
+                    }
+                    if (sestype.Contains("OPE") && sestype.Contains("HEAD"))
+                    {
+                        var payroll = _context1.PayrollFile
+                                   .Where(c => c.Status == 1)
+                                   .Select(c => new
+                                   {
+                                       c.FileId,
+                                       c.FileName,
+                                       c.FileString,
+                                       c.SiteId,
+                                       c.SiteName,
+                                       c.AddedBy,
+                                       c.AddedDate,
+                                   });
+
+                        ViewBag.Approvals = payroll.ToList();
+                    }
+                    if (sestype.Contains("ACC") && sestype.Contains("MAN"))
+                    {
+                        var payroll = _context1.PayrollFile
+                                   .Where(c => c.Status == 2)
+                                   .Select(c => new
+                                   {
+                                       c.FileId,
+                                       c.FileName,
+                                       c.FileString,
+                                       c.SiteId,
+                                       c.SiteName,
+                                       c.AddedBy,
+                                       c.AddedDate,
+                                   });
+
+                        ViewBag.Approvals = payroll.ToList();
+                    }
+                    if (sestype.Contains("INSP"))
+                    {
+                        var payroll = _context1.PayrollFile
+                                   .Where(c => c.Status == 3)
+                                   .Select(c => new
+                                   {
+                                       c.FileId,
+                                       c.FileName,
+                                       c.FileString,
+                                       c.SiteId,
+                                       c.SiteName,
+                                       c.AddedBy,
+                                       c.AddedDate,
+                                   });
+
+                        ViewBag.Approvals = payroll.ToList();
+                    }
+                    if (sestype.Contains("ACCTG"))
+                    {
+                        var payroll = _context1.PayrollFile
+                                   .Where(c => c.Status == 4)
+                                   .Select(c => new
+                                   {
+                                       c.FileId,
+                                       c.FileName,
+                                       c.FileString,
+                                       c.SiteId,
+                                       c.SiteName,
+                                       c.AddedBy,
+                                       c.AddedDate,
+                                   });
+
+                        ViewBag.Approvals = payroll.ToList();
+                    }
+                    return View();
+                }   
+                return View();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error in Forward action: " + ex.Message);
+                return StatusCode(500);
+            }
+        }
+        public async Task<IActionResult> Download(string fileName)
+        {
+            try
+            {
+                var fileResult = await _fileUploadPayroll.DownloadFileAsync(fileName);
+                return fileResult;
+            }
+            catch (FileNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+        }
+        [HttpPost]
+        public IActionResult Approve(int siteId)
+        {
+            try
+            {
+                GetSession();
+                if (HttpContext.Session.GetString(SessionType) == null)
+                {
+                    return RedirectToAction("Login", "Home");
+                }
+                ViewBag.Layout = "Payroll";
+                ViewBag.SessionType = HttpContext.Session.GetString(SessionType);
+                int sesid = int.Parse(HttpContext.Session.GetString(SessionId));
+                DateTime? fdt = DateTime.ParseExact(DateTime.Now.ToString("MM-dd-yyyy HH:mm:ss"), "MM-dd-yyyy HH:mm:ss", CultureInfo.InvariantCulture);
+                var status = _context1.PayrollFile
+                              .Where(s => s.SiteId == siteId)
+                              .Select(s => new
+                              {
+                                  s.FileId,
+                                  s.SiteId,
+                                  s.Status
+                              }).FirstOrDefault();
+                if (status != null)
+                {
+                    if (status.Status == null)
+                    {
+                        var payrollFiles = _context1.PayrollFile
+                                       .Where(pf => pf.SiteId == siteId);
+                        foreach (var payrollFile in payrollFiles)
+                        {
+                            payrollFile.ApproveOM = sesid;
+                            payrollFile.ApproveOMDate = fdt;
+                            payrollFile.Status = 1;
+                        }
+                        _context1.SaveChanges();
+                        return RedirectToAction("ViewPayroll", "Payroll");
+                    }
+                    if (status.Status == 1)
+                    {
+                        var payrollFiles = _context1.PayrollFile
+                                       .Where(pf => pf.SiteId == siteId);
+                        foreach (var payrollFile in payrollFiles)
+                        {
+                            payrollFile.ApproveSOM = sesid;
+                            payrollFile.ApproveSOMDate = fdt;
+                            payrollFile.Status = 2;
+                        }
+                        _context1.SaveChanges();
+                        return RedirectToAction("ViewPayroll", "Payroll");
+                    }
+                    if (status.Status == 2)
+                    {
+                        var payrollFiles = _context1.PayrollFile
+                                       .Where(pf => pf.SiteId == siteId);
+                        foreach (var payrollFile in payrollFiles)
+                        {
+                            payrollFile.ApprovePO = sesid;
+                            payrollFile.ApprovePODate = fdt;
+                            payrollFile.Status = 3;
+                        }
+                        _context1.SaveChanges();
+                        return RedirectToAction("ViewPayroll", "Payroll");
+                    }
+                    if (status.Status == 3)
+                    {
+                        var payrollFiles = _context1.PayrollFile
+                                       .Where(pf => pf.SiteId == siteId);
+                        foreach (var payrollFile in payrollFiles)
+                        {
+                            payrollFile.ApproveIM = sesid;
+                            payrollFile.ApproveIMDate = fdt;
+                            payrollFile.Status = 4;
+                        }
+                        _context1.SaveChanges();
+                        return RedirectToAction("ViewPayroll", "Payroll");
+                    }
+                    if (status.Status == 4)
+                    {
+                        var payrollFiles = _context1.PayrollFile
+                                       .Where(pf => pf.SiteId == siteId);
+                        foreach (var payrollFile in payrollFiles)
+                        {
+                            payrollFile.ApproveACC = sesid;
+                            payrollFile.ApproveACCDate = fdt;
+                            payrollFile.Status = 5;
+                        }
+                        _context1.SaveChanges();
+                        return RedirectToAction("ViewPayroll", "Payroll");
+                    }
+                }
+                return View();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error in Forward action: " + ex.Message);
+                return StatusCode(500);
+            }
+        }
         public IActionResult New()
         {
             try
@@ -269,6 +489,7 @@ namespace NHSP.Controllers
                 {
                     return RedirectToAction("Login", "Home");
                 }
+
                 ViewBag.Layout = "Payroll";
                 ViewBag.SessionType = HttpContext.Session.GetString(SessionType);
                 return View();

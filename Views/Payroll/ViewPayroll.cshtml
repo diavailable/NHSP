@@ -1,4 +1,4 @@
-﻿
+﻿@model NHSP.Models.ViewPayrollModel
 @{
     ViewBag.Title = "Hires";
 }
@@ -12,26 +12,36 @@
                 <tr>
                     <th>Site</th>
                     <th>File</th>
-                    <th>Approved by</th>
+                    <th>Approve</th>
                 </tr>
             </thead>
             <tbody>
-                @foreach (var hire in Model)
+                @if(ViewBag.Approvals != null)
                 {
-                    <tr data-toggle="collapse" data-target="#details-@hire.HireId" class="clickable-row">
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                    </tr>
-                    <tr id="" class="">
-                        <td colspan="4">
-                            <div class="card card-body">
-  
-                            </div>
-                        </td>
+                    foreach (var item in ViewBag.Approvals)
+                    {
+                        <tr>
+                            <td class="text-center text-nowrap">@item.SiteName</td>
+                            <td class="text-center text-nowrap">
+                                <a href="@Url.Action("Download", "Payroll", new { fileName = @item.FileName })" class="btn btn-link p-0 m-0">Download File</a>
+                            </td>
+                            <td>
+                                <form asp-action="Approve" asp-controller="Payroll">
+                                    <input type="hidden" name="siteId" value="@item.SiteId" />
+                                    <button type="submit" class="btn btn-link p-0 m-0" data-siteid="@item.SiteId">Approve</button>
+                                </form>
+                            </td>
+                        </tr>
+                    } 
+                }
+                else
+                {
+                    <tr>
+                        <td>if symptoms persists</td>
+                        <td>consult it koi!?</td>
                     </tr>
                 }
-            </tbody>
+             </tbody>
         </table>
     </div>
 </div>
@@ -39,14 +49,3 @@
 <!-- Bootstrap JS and dependencies -->
 <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-
-<script>
-    // Optional: Add custom JavaScript if needed
-    document.querySelectorAll('.clickable-row').forEach(row => {
-        row.addEventListener('click', () => {
-            const target = row.getAttribute('data-target');
-            const details = document.querySelector(target);
-            details.classList.toggle('collapse');
-        });
-    });
-</script>

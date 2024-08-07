@@ -76,19 +76,23 @@ namespace NHSP.Controllers
                                 u.id,
                                 u.Username,
                                 u.Password,
+                                u.Position,
                                 c.Code
                             };
                 var result = query.FirstOrDefault();
 
                 if (result != null)
                 {
-                    HttpContext.Session.SetString(SessionType, result.Code);
+                    string position = StringEdit.NoSpaceUpper(result.Position);
+                    HttpContext.Session.SetString(SessionType, position);
                     HttpContext.Session.SetString(SessionId, result.id.ToString());
                     var usermodel = new UsersModel
                     {
                         UserName = result.Username,
                         Password = result.Password,
-                        Code = result.Code
+                        Position = position,
+                        Code = result.Code,
+                        Id = result.id.ToString()
                     };
                     return PartialView("_Selection", usermodel);
                 }

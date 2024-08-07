@@ -50,7 +50,7 @@
 <script>
     $(document).ready(function () {
             $('button[id^="showUpload_"]').click(function (event) {
-                event.preventDefault(); // Prevent default form submission
+                event.preventDefault();
 
                 var siteId = $(this).data('siteid');
 
@@ -69,9 +69,8 @@
                 });
             });
 
-            // Handle form submission
             $(document).on('submit', '#uploadForm', function (event) {
-                event.preventDefault(); // Prevent default form submission
+                event.preventDefault();
 
                 var form = $(this);
                 var formData = new FormData(this);

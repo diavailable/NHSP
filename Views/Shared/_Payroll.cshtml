@@ -27,15 +27,15 @@
                                 Hire
                             </a>
                             <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                                @if ((string)ViewData["SessionType"] == "USR")
+                                @if ((string)ViewData["SessionType"] == "SITECOORDINATOR" || (string)ViewData["SessionType"] == "TIMEKEEPER")
                                 {
                                     <li><a class="dropdown-item" asp-area="" asp-controller="Payroll" asp-action="RequestPayroll">Add Payroll</a></li>
                                 }
                                 else
                                 {
-                                    <li><a class="dropdown-item" asp-area="" asp-controller="Payroll" asp-action="ApprovePayrol">Approval</a></li>
+                                    <li><a class="dropdown-item" asp-area="" asp-controller="Payroll" asp-action="ViewPayroll">Approval</a></li>
                                 }
-                                <li><a class="dropdown-item" asp-area="" asp-controller="Payroll" asp-action="ViewRequest">View Requests</a></li>
+                                <li><a class="dropdown-item" asp-area="" asp-controller="Payroll" asp-action="ViewPayroll">View Payroll</a></li>
                             </ul>
                         </li>
                     </ul>

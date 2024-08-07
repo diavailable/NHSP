@@ -16,4 +16,12 @@ namespace NHSP.Models
         public string FileName { get; set; }
         public string SiteId { get; set; }
     }
+    public class ViewPayrollModel
+    {
+        public string FileName { get; set; }  
+        public int SiteId { get; set; }
+        public string SiteName { get; set; }
+        public string SiteStatus { get; set; }
+        public int WithOM {  get; set; }
+    }
 }
