@@ -63,15 +63,15 @@ namespace NHSP.Models
         public string? FileString { get; set; }
         public int? SiteId { get; set; }
         public string? SiteName { get; set; }
-        public string? AddedBy { get; set; }
+        public int? AddedBy { get; set; }
         public DateTime? AddedDate { get; set; }
-        public string? ApproveOM { get; set; }
+        public int? ApproveOM { get; set; }
         public DateTime? ApproveOMDate { get; set; }
-        public string? ApproveSOM { get; set; }
+        public int? ApproveSOM { get; set; }
         public DateTime? ApproveSOMDate { get; set; }
-        public string? ApproveIM { get; set; }
+        public int? ApproveIM { get; set; }
         public DateTime? ApproveIMDate { get; set; }
-        public string? ApproveACC { get; set; }
+        public int? ApproveACC { get; set; }
         public DateTime? ApproveACCDate { get; set; }
         public DateTime? Release { get; set; }
     }

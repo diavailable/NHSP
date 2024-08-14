@@ -18,9 +18,11 @@ using System.Drawing;
 using System.ComponentModel;
 using System.Linq;
 using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
-using static Azure.Core.HttpHeader;
+using System.IO;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using Microsoft.AspNetCore.Hosting.Server;
+using Microsoft.Extensions.Hosting.Internal;
+using System.Globalization;
 
 namespace NHSP.Controllers
 {
@@ -36,13 +38,19 @@ namespace NHSP.Controllers
         public SqlConnection con;
         public SqlCommand cmd;
         private readonly IConfiguration _configuration;
+        private readonly FileUploadService _fileUploadPayroll;
+        private readonly FileUploadService _fileUploadService;
+        private readonly IWebHostEnvironment _hostingEnvironment;
 
-        public HomeController(IConfiguration configuration, PCGContext context1, DatabaseContext context2)
+        public HomeController(IConfiguration configuration, IWebHostEnvironment hostingEnvironment, PCGContext context1, DatabaseContext context2, FileUploadService fileUploadPayroll)
         {
             _configuration = configuration;
             con = new SqlConnection(_configuration.GetConnectionString("portestConnection"));
             _context1 = context1;
             _context2 = context2;
+            _fileUploadPayroll = fileUploadPayroll;
+            _hostingEnvironment = hostingEnvironment;
+            _fileUploadService = new FileUploadService(Path.Combine(_hostingEnvironment.WebRootPath, "Files"));
         }
         public void GetSession() 
         {
@@ -53,13 +61,13 @@ namespace NHSP.Controllers
         }
             
         [ResponseCache(Location = ResponseCacheLocation.None, NoStore = true)]
-        
+
         public IActionResult Login()
         {
             return View();
         }
         [HttpPost]
-        public IActionResult Selection(LoginModel m)
+        public async Task<IActionResult> Selection(LoginModel m)
         {
             if (ModelState.IsValid)
             {

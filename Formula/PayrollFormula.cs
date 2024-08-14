@@ -61,6 +61,26 @@ namespace NHSP.Formula
                 FileDownloadName = fileName
             };
         }
+        public async Task<bool> DeleteFileAsync(string fileName)
+        {
+            var filePath = Path.Combine(_uploadPath, fileName);
+
+            if (System.IO.File.Exists(filePath))
+            {
+                try
+                {
+                    System.IO.File.Delete(filePath);
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error deleting file: {ex.Message}");
+                    return false;
+                }
+            }
+
+            return false;
+        }
     }
     // string extract
     public static class StringEdit

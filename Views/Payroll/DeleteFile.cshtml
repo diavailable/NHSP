@@ -1,0 +1,87 @@
+﻿@{
+    ViewBag.Title = "File List";
+}
+<head>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet" />
+</head>
+<h1>Delete Test</h1>
+<div>
+    <form asp-controller="Payroll" asp-action="DeleteFile" method="post">
+        <div class="form-inline">
+            <input id="MM" name="MM" maxlength="2" type="text" class="form-control text-center" style="width: 30%; display: inline-block;" onkeyup="searchTable()" onblur="zero(this)" />/
+            <input id="dd" name="dd" maxlength="2" type=" text" class="form-control text-center" style="width: 30%; display: inline-block;" onkeyup="searchTable()" onblur="zero(this)" />/
+            <input id="yyyy" name="yyyy" maxlength="4" type="text" class="form-control text-center" style="width: 30%; display: inline-block;" onkeyup="searchTable()"/>
+        </div>
+        <div>
+            <button type="submit" class="btn btn-link p-0 m-0">Delete</button>
+        </div>
+    </form>
+</div>
+<div class="table-responsive">
+    <table id="myTable" class="table table-striped">
+        <thead>
+            <tr>
+                <td class="text-center text-nowrap">File ID</td>
+                <td class="text-center text-nowrap">File Name</td>
+                <td class="text-center text-nowrap">Site</td>
+                <td class="text-center text-nowrap">Added Date</td>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var dr in ViewBag.FileList)
+            {
+                <tr>
+                    <td class="text-center text-nowrap">@dr.FileId</td>
+                    <td class="text-center text-nowrap">@dr.FileName</td>
+                    <td class="text-center text-nowrap">@dr.SiteName</td>
+                    <td class="text-center text-nowrap" id="date">@dr.AddedDate</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.11.7/umd/popper.min.js"></script>
+    <script>
+        function searchTable() {
+            var inputMM = document.getElementById("MM").value.padStart(2, '0');
+            var inputDD = document.getElementById("dd").value.padStart(2, '0');
+            var inputYYYY = document.getElementById("yyyy").value.padStart(4, '0');
+            var table = document.getElementById("myTable");
+            var tr = table.getElementsByTagName("tr");
+
+            var inputDate = new Date(`${inputYYYY}-${inputMM}-${inputDD} 23:59:59`);
+
+            for (var i = 1; i < tr.length; i++) {
+                var td = tr[i].getElementsByTagName("td");
+                var rowContainsFilter = false;
+
+                var dateCell = Array.from(td).find(cell => cell.id === "date");
+                if (dateCell) {
+                    var txtValue = dateCell.textContent || dateCell.innerText;
+
+                    var dateParts = txtValue.split('/');
+                    var cellMonth = dateParts[0].padStart(2, '0');
+                    var cellDay = dateParts[1].padStart(2, '0');
+                    var cellYear = dateParts[2].padStart(4, '0');
+
+                    var cellDate = new Date(`${cellMonth}-${cellDay}-${cellYear}`);
+
+                    if (cellDate <= inputDate) {
+                        rowContainsFilter = true;
+                    }
+                }
+                tr[i].style.display = rowContainsFilter ? "" : "none";
+            }
+        }
+    function zero(element) {
+        let value = element.value;
+        if (value.length === 1 && value >= '1' && value <= '9') {
+            element.value = '0' + value;
+        }
+    }
+</script>

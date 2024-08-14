@@ -23,6 +23,7 @@ using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.Extensions.Hosting.Internal;
 using System.Globalization;
+using static System.Net.WebRequestMethods;
 
 namespace NHSP.Controllers
 {
@@ -51,7 +52,7 @@ namespace NHSP.Controllers
             _context2 = context2;
             _fileUploadPayroll = fileUploadPayroll;
             _hostingEnvironment = hostingEnvironment;
-            _fileUploadService = new FileUploadService(Path.Combine(_hostingEnvironment.WebRootPath, "Files"));
+            _fileUploadService = new FileUploadService(Path.Combine(_hostingEnvironment.WebRootPath, "PayrollFiles"));
         }
 
         public void GetSession()
@@ -91,19 +92,7 @@ namespace NHSP.Controllers
                               c.Status,
                               c.WithOM
                               });
-            /*
-            var sitequery = _context1.PayrollFile
-                .Select(c => new
-                {
-                    c.FileId,
-                    c.FileName,
-                    c.FileString,
-                    c.SiteId,
-                    c.SiteName,
-                    c.AddedBy,
-                    c.AddedDate,
-                });
-*/
+
             ViewBag.Site = sitequery.ToList();
 
             return View();
@@ -171,8 +160,7 @@ namespace NHSP.Controllers
                 pm.FileName = "_" + siteresult.SiteId + "_" + ViewBag.SessionId + Path.GetExtension(fileformat);
                 var (filePath, rawfilename) = await _fileUploadPayroll.UploadFileAsync(pm.UploadFile, pm.FileName);
 
-                DateTime dt = DateTime.Now;
-                string fdt = dt.ToString("MM-dd-yyyy HH:mm:ss");
+                DateTime? fdt = DateTime.ParseExact(DateTime.Now.ToString("MM-dd-yyyy HH:mm:ss"), "MM-dd-yyyy HH:mm:ss", CultureInfo.InvariantCulture);
                 string filedir = filePath;
                 string fname = rawfilename;
                 string sitename = StringEdit.RightStr(siteresult.SiteName);
@@ -181,17 +169,19 @@ namespace NHSP.Controllers
                 {
                     con1.Open();
                 }
-                using (cmd = new SqlCommand("INSERT INTO PayrollFile (FileName, FileString, SiteId, SiteName, Addedby, AddedDate) " +
-                                            "VALUES (@FileName, @FileString, @SiteId, @SiteName, @Addedby, @AddedDate)", con1))
+
+                var payrollFile = new payroll
                 {
-                    cmd.Parameters.AddWithValue("@FileName", fname);
-                    cmd.Parameters.AddWithValue("@FileString", filedir);
-                    cmd.Parameters.AddWithValue("@SiteId", siteresult.SiteId);
-                    cmd.Parameters.AddWithValue("@SiteName", sitename);
-                    cmd.Parameters.AddWithValue("@AddedBy", sctk);
-                    cmd.Parameters.AddWithValue("@AddedDate", fdt);
-                }
-                cmd.ExecuteNonQuery();
+                    FileName = fname,
+                    FileString = filedir,
+                    SiteId = siteresult.SiteId,
+                    SiteName = sitename,
+                    AddedBy = sctk,
+                    AddedDate = fdt
+                };
+                _context1.PayrollFile.Add(payrollFile);
+                _context1.SaveChanges();
+
                 if (con1.State == ConnectionState.Open)
                 {
                     con1.Close();
@@ -216,7 +206,6 @@ namespace NHSP.Controllers
                 return StatusCode(500, "Internal server error");
             }
         }
-
         [HttpGet]
         public IActionResult UploadPartial(int SiteId)
         {
@@ -480,6 +469,100 @@ namespace NHSP.Controllers
                 return StatusCode(500);
             }
         }
+        public IActionResult DeleteFile()
+        {
+            try
+            {
+                GetSession();
+                if (HttpContext.Session.GetString(SessionType) == null)
+                {
+                    return RedirectToAction("Login", "Home");
+                }
+                ViewBag.Layout = "Payroll";
+                ViewBag.SessionType = HttpContext.Session.GetString(SessionType);
+
+                var filelist = _context1.PayrollFile
+                                .Where(a => a.Status != 0)
+                                .Select(a => new
+                                {
+                                    a.FileId,
+                                    a.FileName,
+                                    a.SiteName,
+                                    a.AddedDate
+                                });
+                ViewBag.FileList = filelist.ToList();
+
+                return View();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error in Forward action: " + ex.Message);
+                return StatusCode(500);
+            }
+        }
+        [HttpPost]
+        public async Task<IActionResult> DeleteFile(string MM, string dd, string yyyy)
+        {
+            try
+            {
+                GetSession();
+                if (HttpContext.Session.GetString(SessionType) == null)
+                {
+                    return RedirectToAction("Login", "Home");
+                }
+                ViewBag.Layout = "Payroll";
+                ViewBag.SessionType = HttpContext.Session.GetString(SessionType);
+                string date = yyyy + "-" + MM + "-" + dd + " 23:59:59";
+                DateTime? pdate = DateTime.ParseExact(date, "yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
+                var fileName = await _context1.PayrollFile
+                    .Where(a => a.AddedDate <= pdate)
+                    .Select(a => new
+                    {
+                        a.FileId,
+                        a.FileName,
+                        a.SiteName,
+                        a.AddedDate
+                    })
+                    .ToListAsync();
+
+                if (fileName != null && fileName.Any())
+                {
+                    foreach (var file in fileName)
+                    {
+                        string fileToDelete = file.FileName;
+                        var fileDeleted = await _fileUploadService.DeleteFileAsync(fileToDelete);
+
+                        if (fileDeleted)
+                        {
+                            var payrollFile = await _context1.PayrollFile
+                            .FirstOrDefaultAsync(p => p.FileName == file.FileName);
+
+                            if (payrollFile != null)
+                            {
+                                payrollFile.Status = 0;
+                                await _context1.SaveChangesAsync();
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine($"Failed to delete file '{file.FileName}'.");
+                            TempData["ErrorMessage"] = "Failed to delete the file.";
+                        }
+                    }
+                    return RedirectToAction("DeleteFile");
+                }
+                else
+                {
+                    TempData["ErrorMessage"] = "File not found.";
+                    return RedirectToAction("DeleteFile");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error in Forward action: " + ex.Message);
+                return StatusCode(500);
+            }
+        }
         public IActionResult New()
         {
             try
@@ -489,7 +572,6 @@ namespace NHSP.Controllers
                 {
                     return RedirectToAction("Login", "Home");
                 }
-
                 ViewBag.Layout = "Payroll";
                 ViewBag.SessionType = HttpContext.Session.GetString(SessionType);
                 return View();
