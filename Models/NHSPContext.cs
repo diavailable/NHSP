@@ -1,16 +1,19 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace NHSP.Models
 {
-    public class PCGContext : DbContext
+    public class NHSPContext : DbContext
     {
-        public PCGContext(DbContextOptions<PCGContext> options) : base(options)
+        public NHSPContext(DbContextOptions<NHSPContext> options) : base(options)
         {
         }
         public DbSet<site> site { get; set; }
-        public DbSet<payroll> PayrollFile { get; set; }
+        public DbSet<payroll> payroll { get; set; }
+        public DbSet<Users> Users { get; set; }
+        public DbSet<Sites> Sites { get; set; }
     }
     public class site
     {
@@ -38,11 +41,37 @@ namespace NHSP.Models
         public DateTime? ApproveSOMDate { get; set; }
         public int? ApprovePO { get; set; }
         public DateTime? ApprovePODate { get; set; }
-        public int? ApproveIM { get; set; }
-        public DateTime? ApproveIMDate { get; set; }
         public int? ApproveACC { get; set; }
         public DateTime? ApproveACCDate { get; set; }
+        public int? FinalizedBy { get; set; }
         public DateTime? Release { get; set; }
         public int? Status { get; set; }
+    }
+
+    public class Users
+    {
+        [Key]
+        public int UserId { get; set; }
+        public string LastName { get; set; }
+        public string FirstName { get; set; }
+        public string MiddleName { get; set; }
+        public string Position { get; set; }
+        public string UserType { get; set; }
+        public string Username { get; set; }
+        public string Password { get; set; }
+        public string UserStatus { get; set; }
+        public string ContactNo { get; set; }
+        public int? SiteId { get; set; }
+    }
+    public class Sites
+    {
+        [Key]
+        public int SiteId { get; set; }
+        public string Sitename { get; set; }   
+        public string Status { get; set; }
+        public int? SiteSOM { get; set; }
+        public int? SiteOM { get; set; }
+        public int? SiteSCTK{ get; set; }
+        public int Payroll { get; set; }
     }
 }

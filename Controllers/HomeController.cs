@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using NHSP.Models;
-using NHSP.Formula;
 using System.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using System.Data.SqlClient;
@@ -23,12 +22,15 @@ using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.Extensions.Hosting.Internal;
 using System.Globalization;
+using NHSP.Payroll.Formula;
+using NHSP.Areas.Payroll.Models;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace NHSP.Controllers
 {
     public class HomeController : Controller
     {
-        private readonly PCGContext _context1;
+        private readonly NHSPContext _context1;
         private readonly DatabaseContext _context2;
         const string SessionName = "_Name";
         const string SessionLayout = "_Layout";
@@ -42,10 +44,10 @@ namespace NHSP.Controllers
         private readonly FileUploadService _fileUploadService;
         private readonly IWebHostEnvironment _hostingEnvironment;
 
-        public HomeController(IConfiguration configuration, IWebHostEnvironment hostingEnvironment, PCGContext context1, DatabaseContext context2, FileUploadService fileUploadPayroll)
+        public HomeController(IConfiguration configuration, IWebHostEnvironment hostingEnvironment, NHSPContext context1, DatabaseContext context2, FileUploadService fileUploadPayroll)
         {
             _configuration = configuration;
-            con = new SqlConnection(_configuration.GetConnectionString("portestConnection"));
+            con = new SqlConnection(_configuration.GetConnectionString("pettycashConnection"));
             _context1 = context1;
             _context2 = context2;
             _fileUploadPayroll = fileUploadPayroll;
@@ -75,32 +77,65 @@ namespace NHSP.Controllers
                 {
                     con.Open();
                 }
-                var query = from u in _context2.tbl_users
-                            join c in _context2.tbl_contents on u.User_Type equals c.id into uc
-                            from c in uc.DefaultIfEmpty()
-                            where u.Username == m.Username && u.Password == m.Password
-                            select new
-                            {
-                                u.id,
-                                u.Username,
-                                u.Password,
-                                u.Position,
-                                c.Code
-                            };
-                var result = query.FirstOrDefault();
 
-                if (result != null)
+                var query2 = _context1.Users
+                            .Where(a => a.Username == m.Username && a.Password == m.Password)
+                            .Select(a => new
+                            {
+                                a.UserId,
+                                a.FirstName,
+                                a.Username,
+                                a.Password,
+                                a.Position,
+                                a.UserType
+                            });
+
+                var result2 = query2.FirstOrDefault();
+
+                if (result2 == null)
                 {
-                    string position = StringEdit.NoSpaceUpper(result.Position);
+                    var query1 = from u in _context2.tbl_users
+                                 join c in _context2.tbl_contents on u.User_Type equals c.id into uc
+                                 from c in uc.DefaultIfEmpty()
+                                 where u.Username == m.Username && u.Password == m.Password
+                                 select new
+                                 {
+                                     u.id,
+                                     u.First_Name,
+                                     u.Username,
+                                     u.Password,
+                                     u.Position,
+                                     c.Code
+                                 };
+                    var result1 = query1.FirstOrDefault();
+
+                    string position = StringEdit.NoSpaceUpper(result1.Position);
                     HttpContext.Session.SetString(SessionType, position);
-                    HttpContext.Session.SetString(SessionId, result.id.ToString());
+                    HttpContext.Session.SetString(SessionId, result1.id.ToString());
+                    HttpContext.Session.SetString(SessionName, result1.First_Name.ToString());
                     var usermodel = new UsersModel
                     {
-                        UserName = result.Username,
-                        Password = result.Password,
+                        UserName = result1.Username,
+                        Password = result1.Password,
                         Position = position,
-                        Code = result.Code,
-                        Id = result.id.ToString()
+                        Code = result1.Code,
+                        Id = result1.id.ToString()
+                    };
+                    return PartialView("_Selection", usermodel);
+                }
+                if (result2 != null)
+                {
+                    string position = StringEdit.NoSpaceUpper(result2.Position);
+                    HttpContext.Session.SetString(SessionType, position);
+                    HttpContext.Session.SetString(SessionId, result2.UserId.ToString());
+                    HttpContext.Session.SetString(SessionName, result2.FirstName.ToString());
+                    var usermodel = new UsersModel
+                    {
+                        UserName = result2.Username,
+                        Password = result2.Password,
+                        Position = position,
+                        Code = result2.UserType,
+                        Id = result2.UserId.ToString()
                     };
                     return PartialView("_Selection", usermodel);
                 }
@@ -111,6 +146,14 @@ namespace NHSP.Controllers
                 }
             }
             return View(m);
+        }
+        public IActionResult Logout()
+        {
+            HttpContext.Session.Clear();
+            HttpContext.Response.Headers["Cache-Control"] = "no-cache, no-store";
+            HttpContext.Response.Headers["Pragma"] = "no-cache";
+            HttpContext.Response.Headers["Expires"] = "-1";
+            return RedirectToAction("Login");
         }
     }
 }

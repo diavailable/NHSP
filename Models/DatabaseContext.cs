@@ -1,12 +1,13 @@
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
-namespace NHSP.Models
+namespace NHSP.Areas.Payroll.Models
 {
     public class DatabaseContext : DbContext
     {
         public DatabaseContext(DbContextOptions<DatabaseContext> options) : base(options)
-    {
+        {
 
         }
         public DbSet<tbl_usersModel> tbl_users { get; set; }
@@ -29,14 +30,18 @@ namespace NHSP.Models
         public string Last_Modified_By { get; set; }
         public string Contact_Number { get; set; }
         public string Id_Number { get; set; }
+        public int? SiteId { get; set; }
     }
     public class tbl_contentsModel
     {
+        [Key]
         public int id { get; set; }
         public string Code { get; set; }
         public string Item_Type { get; set; }
         public string Item_Details { get; set; }
         public int? Status { get; set; }
         public int? WithOM { get; set; }
+        public int? SC_TK { get; set; }
+        public int? SOM { get; set; }
     }
 }

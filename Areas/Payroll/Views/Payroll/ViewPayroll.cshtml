@@ -1,0 +1,96 @@
+﻿@model NHSP.Areas.Payroll.Models.ViewPayrollModel
+@{
+    ViewData["Title"] = "Payroll";
+}
+<head>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet" />
+</head>
+
+<h1 style="text-align:center">Payroll</h1>
+@if (!string.IsNullOrEmpty((string)ViewData["SessionType"]) && ((string)ViewData["SessionType"]).Contains("PAYROLL") || ((string)ViewData["SessionType"]).Contains("ACCTG"))
+{
+
+}
+else
+{
+    <div>
+        <button type="button" class="btn btn-primary w-100" id="selectsite">Assign Site</button>
+    </div>
+}
+<div>
+    <table class="table table-striped table-bordered">
+        <thead>
+            <tr>
+                <th class="text-center text-uppercase">Site</th>
+                <th class="text-center text-uppercase">File</th>
+                <th class="text-center text-uppercase">Approve</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (ViewBag.Approvals != null)
+            {
+                foreach (var item in ViewBag.Approvals)
+                {
+                    <tr>
+                        <td class="text-center text-nowrap">@item.SiteName</td>
+                        <td class="text-center text-nowrap">
+                            <a href="@Url.Action("Download", "Payroll", new { fileName = @item.FileName })" class="btn btn-link p-0 m-0">Download File</a>
+                        </td>
+                        <td class="d-flex justify-content-center">
+                            <form asp-action="Approve" asp-controller="Payroll" asp-area="Payroll">
+                                <input type="hidden" name="siteId" value="@item.SiteId" />
+                                <button type="submit" class="btn btn-success py-0" data-siteid="@item.SiteId">Approve</button>
+                            </form>
+                            <div class="mx-1"></div>
+                            <form asp-action="Decline" asp-controller="Payroll" asp-area="Payroll">
+                                <input type="hidden" name="siteId" value="@item.SiteId" />
+                                <button type="submit" class="btn btn-danger py-0" data-siteid="@item.SiteId">Decline</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td class="text-center text-nowrap">if symptoms persists</td>
+                    <td class="text-center text-nowrap">consult it koi!?</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+<div class="modal fade" id="selectsiteModal" tabindex="-1" aria-labelledby="selectsiteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div id="selectsiteModalBody">
+                <!-- Content will be loaded here dynamically -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function () {
+        $('button[id^="selectsite"]').click(function (event) {
+            event.preventDefault();
+
+            $.ajax({
+                url: '/Payroll/Payroll/SelectSite',
+                type: 'GET',
+                success: function (data) {
+                    $('#selectsiteModalBody').html(data);
+                    var selectsiteModal = new bootstrap.Modal(document.getElementById('selectsiteModal'));
+                    selectsiteModal.show();
+                },
+                error: function () {
+                    alert('Failed to load the modal content.');
+                }
+            });
+        });
+    });
+</script>

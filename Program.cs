@@ -1,13 +1,14 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using NHSP.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using System;
-using NHSP.Formula;
+using NHSP.Payroll.Formula;
 using Microsoft.AspNetCore.Hosting;
 using System.IO;
+using NHSP.Areas.Payroll.Models;
+using NHSP.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 //Session
@@ -25,9 +26,9 @@ builder.Services.AddSession(options =>
 });
 
 builder.Services.AddDbContext<DatabaseContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("portestConnection")));
-builder.Services.AddDbContext<PCGContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("pcgConnection")));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("pettycashConnection")));
+builder.Services.AddDbContext<NHSPContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("nhspConnection")));
 
 var uploadPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "PayrollFiles");
 builder.Services.AddSingleton(new FileUploadService(uploadPath));
@@ -52,6 +53,11 @@ app.UseAuthorization();
 app.UseSession();
 
 app.UseRouting();
+
+app.MapControllerRoute(
+    name: "area",
+    pattern: "{area:exists}/{controller=Payroll}/{action= DashPayroll}/{id?}"
+);
 
 app.MapControllerRoute(
     name: "default",

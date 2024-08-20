@@ -1,12 +1,12 @@
-﻿@model FileModel
+﻿@model NHSP.Areas.Payroll.Models.FileModel
 
 <div class="modal-header">
     <h5 class="modal-title" id="uploadModalLabel">Upload File</h5>
     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 </div>
 <div class="modal-body">
-    <h1>@Model.SiteId</h1>
-    <form id="uploadForm" method="post" enctype="multipart/form-data" action="/Payroll/Upload">
+    <h1>@Model.SiteName</h1>
+    <form id="uploadForm" method="post" enctype="multipart/form-data" asp-area="Payroll" asp-controller="Payroll" asp-action="Upload">
         <input type="hidden" name="SiteId" value="@Model.SiteId" />
         <div class="mb-3">
             <label for="formFile" class="form-label">Choose file</label>

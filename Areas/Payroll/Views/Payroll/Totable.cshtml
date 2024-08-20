@@ -1,0 +1,87 @@
+﻿@model NHSP.Areas.Payroll.Models.UserMigrate
+@{
+    ViewData["Title"] = "Users";
+}
+
+<div>
+    <input class="form-control" type="text" id="search" placeholder="Search here" onkeyup="searchTable()">
+</div>
+<div class="table-responsive">
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th class="text-center text-nowrap">SiteId</th>
+                <th class="text-center text-nowrap">SiteName</th>
+                <th class="text-center text-nowrap">Last Name</th>
+                <th class="text-center text-nowrap">Middle Name</th>
+                <th class="text-center text-nowrap">Position</th>
+                <th class="text-center text-nowrap">Contact No.</th>
+                <th class="text-center text-nowrap">Site Id</th>
+                <th class="text-center text-nowrap">Action</th>
+            </tr>
+        </thead>
+        <tbody id="myTable">
+            @if (ViewBag.Users != null)
+            {
+                foreach (var dr in ViewBag.Users)
+                {
+                    <tr>
+                        <td class="text-center text-nowrap">@dr.id</td>
+                        <td class="text-center text-nowrap">@dr.First_Name</td>
+                        <td class="text-center text-nowrap">@dr.Last_Name</td>
+                        <td class="text-center text-nowrap">@dr.Middle_Name</td>
+                        <td class="text-center text-nowrap">@dr.Position</td>
+                        <td class="text-center text-nowrap">@dr.Contact_Number</td>
+                        <td class="text-center text-nowrap">@dr.SiteId</td>
+                        <td>
+                            <form asp-action="MigrateUser" asp-controller="Payroll" asp-area="Payroll">
+                                <input type="hidden" asp-for="UserId" value="@dr.id" />
+                                <input type="hidden" asp-for="LastName" value="@dr.Last_Name" />
+                                <input type="hidden" asp-for="FirstName" value="@dr.First_Name" />
+                                <input type="hidden" asp-for="MiddleName" value="@dr.Middle_Name" />
+                                <input type="hidden" asp-for="Position" value="@dr.Position" />
+                                <input type="hidden" asp-for="Username" value="@dr.Username" />
+                                <input type="hidden" asp-for="Password" value="@dr.Password" />
+                                <input type="hidden" asp-for="ContactNo" value="@dr.Contact_Number" />
+                                <input type="hidden" asp-for="SiteId" value="@dr.SiteId" />
+                                <button type="submit" class="btn btn-primary py-0" >Migrate</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td>if symptoms persists</td>
+                    <td>consult it koi!?</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<script>
+    function searchTable() {
+        var input, filter, table, tr, td, i, txtValue;
+        input = document.getElementById("search");
+        filter = input.value.toUpperCase();
+        table = document.getElementById("myTable");
+        tr = table.getElementsByTagName("tr");
+
+        for (i = 0; i < tr.length; i++) {
+            td = tr[i].getElementsByTagName("td");
+            for (var j = 0; j < td.length; j++) {
+                if (td[j]) {
+                    txtValue = td[j].textContent || td[j].innerText;
+                    if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                        tr[i].style.display = "";
+                        break;
+                    } else {
+                        tr[i].style.display = "none";
+                    }
+                }
+            }
+        }
+    }
+</script>

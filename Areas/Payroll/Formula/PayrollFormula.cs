@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.IO;
 using System.Threading.Tasks;
 
-namespace NHSP.Formula
+namespace NHSP.Payroll.Formula
 {
     public class PayrollFormula
     {
@@ -48,12 +48,12 @@ namespace NHSP.Formula
         {
             var filePath = Path.Combine(_uploadPath, fileName);
 
-            if (!System.IO.File.Exists(filePath))
+            if (!File.Exists(filePath))
             {
                 throw new FileNotFoundException("The file was not found.", fileName);
             }
 
-            var fileBytes = await System.IO.File.ReadAllBytesAsync(filePath);
+            var fileBytes = await File.ReadAllBytesAsync(filePath);
             var contentType = "application/octet-stream"; // Default content type for files
 
             return new FileContentResult(fileBytes, contentType)
@@ -65,11 +65,11 @@ namespace NHSP.Formula
         {
             var filePath = Path.Combine(_uploadPath, fileName);
 
-            if (System.IO.File.Exists(filePath))
+            if (File.Exists(filePath))
             {
                 try
                 {
-                    System.IO.File.Delete(filePath);
+                    File.Delete(filePath);
                     return true;
                 }
                 catch (Exception ex)
