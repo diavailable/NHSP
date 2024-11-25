@@ -5,7 +5,7 @@
         <h1>Site List</h1>
         <div class="form-group">
             <label for="siteId" class="form-label">Select Site</label>
-            <select name="siteId" class="form-select">
+            <select id="siteselect" name="siteId" class="form-select">
                 @foreach (var dr in Model)
                 {
                     <option value="@dr.SiteId">@dr.Sitename</option>

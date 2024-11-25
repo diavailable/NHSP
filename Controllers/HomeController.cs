@@ -25,6 +25,8 @@ using System.Globalization;
 using NHSP.Payroll.Formula;
 using NHSP.Areas.Payroll.Models;
 using Microsoft.AspNetCore.Http.HttpResults;
+using static Azure.Core.HttpHeader;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace NHSP.Controllers
 {
@@ -69,7 +71,7 @@ namespace NHSP.Controllers
             return View();
         }
         [HttpPost]
-        public async Task<IActionResult> Selection(LoginModel m)
+        public async Task<IActionResult> Login(LoginModel m)
         {
             if (ModelState.IsValid)
             {
@@ -79,7 +81,7 @@ namespace NHSP.Controllers
                 }
 
                 var query2 = _context1.Users
-                            .Where(a => a.Username == m.Username && a.Password == m.Password)
+                            .Where(a => a.Username == m.Username && a.Password == m.Password && a.UserStatus == "Active")
                             .Select(a => new
                             {
                                 a.UserId,
@@ -108,22 +110,30 @@ namespace NHSP.Controllers
                                      c.Code
                                  };
                     var result1 = query1.FirstOrDefault();
-
-                    string position = StringEdit.NoSpaceUpper(result1.Position);
-                    HttpContext.Session.SetString(SessionType, position);
-                    HttpContext.Session.SetString(SessionId, result1.id.ToString());
-                    HttpContext.Session.SetString(SessionName, result1.First_Name.ToString());
-                    var usermodel = new UsersModel
+                    if(result1 != null)
                     {
-                        UserName = result1.Username,
-                        Password = result1.Password,
-                        Position = position,
-                        Code = result1.Code,
-                        Id = result1.id.ToString()
-                    };
-                    return PartialView("_Selection", usermodel);
+                        string position = StringEdit.NoSpaceUpper(result1.Position);
+                        HttpContext.Session.SetString(SessionType, position);
+                        HttpContext.Session.SetString(SessionId, result1.id.ToString());
+                        HttpContext.Session.SetString(SessionName, result1.First_Name.ToString());
+                        var usermodel = new UsersModel
+                        {
+                            UserName = result1.Username,
+                            Password = result1.Password,
+                            Position = position,
+                            Code = result1.Code,
+                            Id = result1.id.ToString()
+                        };
+                        return RedirectToAction("DashPayroll", "Payroll", new { area = "Payroll" });
+                    }
+                    else
+                    {
+                        ModelState.AddModelError("Username", "Username / Password is invalid.");
+                    }
+                    //return PartialView("_Selection", usermodel);
                 }
-                if (result2 != null)
+                //if (result2 != null)
+                else
                 {
                     string position = StringEdit.NoSpaceUpper(result2.Position);
                     HttpContext.Session.SetString(SessionType, position);
@@ -137,13 +147,13 @@ namespace NHSP.Controllers
                         Code = result2.UserType,
                         Id = result2.UserId.ToString()
                     };
-                    return PartialView("_Selection", usermodel);
+                    return RedirectToAction("DashPayroll", "Payroll", new { area = "Payroll" });
+                    //return PartialView("_Selection", usermodel);
                 }
-                else
-                {
-                    ModelState.AddModelError("Username", "Username / Password is incorrect.");
-                    return View(m);
-                }
+                //else
+                //{
+                //    ModelState.AddModelError("Username", "Username / Password is incorrect.");
+                //}
             }
             return View(m);
         }
@@ -154,6 +164,76 @@ namespace NHSP.Controllers
             HttpContext.Response.Headers["Pragma"] = "no-cache";
             HttpContext.Response.Headers["Expires"] = "-1";
             return RedirectToAction("Login");
+        }
+        public IActionResult Register()
+        {
+            HttpContext.Session.Clear();
+            HttpContext.Response.Headers["Cache-Control"] = "no-cache, no-store";
+            HttpContext.Response.Headers["Pragma"] = "no-cache";
+            HttpContext.Response.Headers["Expires"] = "-1";
+            return View();
+        }
+        [HttpPost]
+        public IActionResult Register(Users u)
+        {
+            var user = _context1.Users
+                        .Where(a => a.Username == u.Username)
+                        .Select(a => new
+                        {
+                            a.Username,
+                            a.Password
+                        }).FirstOrDefault();
+
+            ModelState.Remove("LastName");
+            ModelState.Remove("FirstName");
+            ModelState.Remove("MiddleName");
+            ModelState.Remove("Position");
+            ModelState.Remove("ContactNo");
+            ModelState.Remove("Username");
+            ModelState.Remove("Password");
+
+            if (string.IsNullOrEmpty(u.LastName))
+            {
+                ModelState.AddModelError("LastName", "Last Name is invalid");
+            }
+            if (string.IsNullOrEmpty(u.FirstName))
+            {
+                ModelState.AddModelError("FirstName", "First Name is invalid");
+            }
+            if (string.IsNullOrEmpty(u.MiddleName))
+            {
+                ModelState.AddModelError("MiddleName", "Middle Name is invalid");
+            }
+            if (string.IsNullOrEmpty(u.Position))
+            {
+                ModelState.AddModelError("Position", "Position is invalid");
+            }
+            if (string.IsNullOrEmpty(u.ContactNo))
+            {
+                ModelState.AddModelError("ContactNo", "Contact # is invalid");
+            }
+            if (string.IsNullOrEmpty(u.Username))
+            {
+                ModelState.AddModelError("Username", "Username is invalid");
+            }
+            if (user != null)
+            {
+                ModelState.AddModelError("Username", "Username is taken");
+            }
+            if (string.IsNullOrEmpty(u.Password) )
+            {
+                ModelState.AddModelError("Password", "Password is invalid");
+            }
+            if (ModelState.IsValid)
+            {
+                _context1.Users.Add(u); 
+                _context1.SaveChanges();
+                return RedirectToAction("Login");
+            }
+            else
+            {
+                return View(u);
+            }
         }
     }
 }

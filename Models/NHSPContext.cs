@@ -46,6 +46,7 @@ namespace NHSP.Models
         public int? FinalizedBy { get; set; }
         public DateTime? Release { get; set; }
         public int? Status { get; set; }
+        public string? Remarks { get; set; }
     }
 
     public class Users

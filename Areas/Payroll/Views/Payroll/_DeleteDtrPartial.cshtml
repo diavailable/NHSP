@@ -1,0 +1,16 @@
+﻿@model NHSP.Areas.Payroll.Models.SiteList
+
+<form id="deleteForm" method="post" asp-area="Payroll" asp-controller="Payroll" asp-action="DeleteDtr">
+    <div class="modal-body">
+
+            <h1>@Model.Sitename</h1>
+            <input type="hidden" name="SiteId" value="@Model.SiteId"/>
+            <div class="mb-3">
+                Are you sure to delete DTR?
+            </div>
+    </div>
+    <div class="modal-footer">
+        <button type="submit" class="btn btn-danger">Delete</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+    </div>
+</form>

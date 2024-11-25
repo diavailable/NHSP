@@ -12,6 +12,7 @@ namespace NHSP.Areas.Payroll.Models
         }
         public DbSet<tbl_usersModel> tbl_users { get; set; }
         public DbSet<tbl_contentsModel> tbl_contents { get; set; }
+        public DbSet<sites> Sites { get; set; }
     }
     public class tbl_usersModel
     {
@@ -43,5 +44,16 @@ namespace NHSP.Areas.Payroll.Models
         public int? WithOM { get; set; }
         public int? SC_TK { get; set; }
         public int? SOM { get; set; }
+    }
+    public class sites
+    {
+        [Key]
+        public int SiteId { get; set; }
+        public string Sitename { get; set; }
+        public string Status { get; set; }
+        public int? SiteSOM { get; set; }
+        public int? SiteOM { get; set; }
+        public int? SiteSCTK { get; set; }
+        public int Payroll { get; set; }
     }
 }

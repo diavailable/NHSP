@@ -16,6 +16,7 @@
             <tr>
                 <th class="text-center text-uppercase">Site</th>
                 <th class="text-center text-uppercase">File</th>
+                <th class="text-center text-uppercase">Remarks</th>
                 <th class="text-center text-uppercase">Status</th>
             </tr>
         </thead>
@@ -25,14 +26,18 @@
                 foreach (var pr in ViewBag.Completed)
                 {
                     <tr>
-                        <td class="text-center text-nowrap">@pr.SiteName</td>
-                        <td class="text-center text-nowrap">@pr.FileName</td>
-                        @if(pr.Status == 6)
+                        @if (pr.Status == 6)
                         {
+                            <td class="text-center text-nowrap">@pr.SiteName</td>
+                            <td class="text-center text-nowrap">@pr.FileName</td>
+                            <td class="text-center text-nowrap">N/A</td>
                             <td class="text-center text-nowrap" style="color: limegreen;">Complete</td>
                         }
                         else
                         {
+                            <td class="text-center text-nowrap">@pr.SiteName</td>
+                            <td class="text-center text-nowrap">@pr.FileName</td>
+                            <td class="text-center text-nowrap">@pr.Remarks</td>
                             <td class="text-center text-nowrap" style="color: red;">Declined</td>
                         }
                     </tr>

@@ -27,7 +27,7 @@ namespace NHSP.Payroll.Formula
             // Ensure the file extension is preserved
             var extension = Path.GetExtension(file.FileName);
             string datePart = DateTime.Now.ToString("MMddyy");
-            string customFileName = $"{datePart}{FileName}";
+            string customFileName = $"{FileName}";
             var filePath = Path.Combine(_uploadPath, customFileName);
 
             // Create directory if it does not exist
@@ -80,6 +80,29 @@ namespace NHSP.Payroll.Formula
             }
 
             return false;
+        }
+        public async Task<List<string>> GetFileNameAsync(string searchQuery = null)
+        {
+            if (!Directory.Exists(_uploadPath))
+            {
+                return new List<string>();
+            }
+
+            // Retrieve all files with their full names (including extensions)
+            var files = Directory.GetFiles(_uploadPath).ToList();
+
+            if (!string.IsNullOrEmpty(searchQuery))
+            {
+                // Filter based on file names without extensions
+                files = files
+                    .Where(file => Path.GetFileNameWithoutExtension(file)
+                        .Equals(searchQuery, StringComparison.OrdinalIgnoreCase)) // Exact match without extension
+                    .ToList();
+            }
+
+            // Return full file names with extensions
+            var fullfilename = files.Select(Path.GetFileName).ToList();
+            return await Task.FromResult(fullfilename);
         }
     }
     // string extract

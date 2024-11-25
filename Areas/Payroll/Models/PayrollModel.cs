@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
+using System.ComponentModel.DataAnnotations;
 
 namespace NHSP.Areas.Payroll.Models
 {
@@ -11,6 +12,7 @@ namespace NHSP.Areas.Payroll.Models
     }
     public class FileModel
     {
+        [BindRequired]
         [DataType(DataType.Upload)]
         public IFormFile UploadFile { get; set; }
         public string FileName { get; set; }
@@ -26,6 +28,7 @@ namespace NHSP.Areas.Payroll.Models
         public DateTime? AddedDate { get; set; }
         public string SiteStatus { get; set; }
         public int WithOM { get; set; }
+        public string Remarks { get; set; }
     }
     public class UserMigrate
     {

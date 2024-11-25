@@ -1,0 +1,165 @@
+﻿@model NHSP.Areas.Payroll.Models.FileModel
+
+<div class="modal-body-preview">
+    <div class="zoom-container">
+        <div class="controls">
+            <button id="zoomIn">Zoom In 🔍+</button>
+            <button id="zoomOut">Zoom Out 🔍-</button>
+            <button id="resetZoom">Reset 🔄</button>
+@*             <button id="moveLeft">⬅️</button>
+            <button id="moveRight">➡️</button>
+            <button id="moveUp">⬆️</button>
+            <button id="moveDown">⬇️</button> *@
+        </div>
+
+        <div class="image-wrapper">
+            <img id="zoomImage" src="@Url.Content("~/PayrollFiles/" + Model.FileName)" />
+        </div>
+    </div>
+</div>
+<div class="modal-footer">
+    <form asp-area="Payroll" asp-controller="Payroll" asp-action="Download" method="post">
+        <input type="hidden" name="fileName" value="@Model.FileName" />
+        <button type="submit" class="btn btn-success">Download File</button>
+    </form>
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+</div>
+
+<script>
+    $(document).ready(function () {
+        initializeZoomControls();
+    });
+
+    function initializeZoomControls() {
+        let img = $("#zoomImage");
+        let scale = 1;
+        let translateX = 0;
+        let translateY = 0;
+
+        function updateTransform() {
+            img.css("transform", `scale(${scale}) translate(${translateX}px, ${translateY}px)`);
+        }
+
+        $(document).on("click", "#zoomIn", function () {
+            scale += 0.5;
+            updateTransform();
+        });
+
+        $(document).on("click", "#zoomOut", function () {
+            if (scale > 0.4) {
+                scale -= 0.5;
+                updateTransform();
+            }
+        });
+
+        $(document).on("click", "#resetZoom", function () {
+            scale = 1;
+            translateX = 0;
+            translateY = 0;
+            updateTransform();
+        });
+
+        $(document).on("click", "#moveLeft", function () {
+            translateX -= 20;
+            updateTransform();
+        });
+
+        $(document).on("click", "#moveRight", function () {
+            translateX += 20;
+            updateTransform();
+        });
+
+        $(document).on("click", "#moveUp", function () {
+            translateY -= 20;
+            updateTransform();
+        });
+
+        $(document).on("click", "#moveDown", function () {
+            translateY += 20;
+            updateTransform();
+        });
+
+        let isDragging = false;
+        let startX, startY;
+
+        img.on("mousedown", function (event) {
+            isDragging = true;
+            startX = event.clientX;
+            startY = event.clientY;
+            img.css("cursor", "grabbing");
+        });
+
+        $(document).on("mousemove", function (event) {
+            if (isDragging) {
+                translateX += event.clientX - startX;
+                translateY += event.clientY - startY;
+                startX = event.clientX;
+                startY = event.clientY;
+                updateTransform();
+            }
+        });
+
+        $(document).on("mouseup", function () {
+            isDragging = false;
+            img.css("cursor", "grab");
+        });
+
+        img.on("touchstart", function (event) {
+            if (event.touches.length === 2) {
+                event.preventDefault();
+            }
+        });
+
+        // Pinch-to-Zoom (Mobile Touch)
+        let initialDistance = 0;
+        let initialScale = scale;
+
+        img.on("touchmove", function (event) {
+            if (event.touches.length === 2) {
+                event.preventDefault();
+                let touch1 = event.touches[0];
+                let touch2 = event.touches[1];
+
+                let currentDistance = Math.hypot(
+                    touch2.pageX - touch1.pageX,
+                    touch2.pageY - touch1.pageY
+                );
+
+                if (initialDistance === 0) {
+                    initialDistance = currentDistance;
+                    initialScale = scale;
+                } else {
+                    scale = initialScale * (currentDistance / initialDistance);
+                    updateTransform();
+                }
+            }
+        });
+
+        img.on("touchend", function () {
+            initialDistance = 0;
+        });
+
+        img.on("touchstart", function (event) {
+            if (event.touches.length === 1) {
+                isDragging = true;
+                startX = event.touches[0].clientX;
+                startY = event.touches[0].clientY;
+            }
+        });
+
+        img.on("touchmove", function (event) {
+            if (isDragging && event.touches.length === 1) {
+                let touch = event.touches[0];
+                translateX += touch.clientX - startX;
+                translateY += touch.clientY - startY;
+                startX = touch.clientX;
+                startY = touch.clientY;
+                updateTransform();
+            }
+        });
+
+        img.on("touchend", function () {
+            isDragging = false;
+        });
+    }
+</script>

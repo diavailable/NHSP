@@ -8,7 +8,8 @@
     <meta http-equiv="Expires" content="0">
     <title>@ViewData["Title"] - NHSP</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet" />
-    <link rel="stylesheet" href="~/css/site.css"/>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/selectize.js/0.15.2/css/selectize.bootstrap5.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="~/css/prevnav.css"/>
     <link rel="stylesheet" href="~/NHSP.styles.css"/>
 </head>
 <body>
@@ -32,16 +33,32 @@
                             <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
                                 @if ((string)ViewData["SessionType"] == "SITECOORDINATOR" || (string)ViewData["SessionType"] == "TIMEKEEPER")
                                 {
-                                    <li><a class="dropdown-item" asp-area="Payroll" asp-controller="Payroll" asp-action="RequestPayroll">Add Payroll</a></li>
+                                    <li><a class="dropdown-item" asp-area="Payroll" asp-controller="Payroll" asp-action="RequestPayroll">Add DTR</a></li>
+                                    <li><a class="dropdown-item" asp-area="Payroll" asp-controller="Payroll" asp-action="CheckPayroll">Payroll</a></li>
+                                    @* <li><a class="dropdown-item" asp-area="payroll" asp-controller="payroll" asp-action="totable">users</a></li> *@
+                                }
+                                else if ((string)ViewData["SessionType"] == "PAYROLLOFFICER" || (string)ViewData["SessionType"] == "ADMIN/ACCTG STAFF")
+                                {
+                                    <li><a class="dropdown-item" asp-area="Payroll" asp-controller="Payroll" asp-action="AddPayroll">Add Payroll</a></li>
+                                    <li><a class="dropdown-item" asp-area="Payroll" asp-controller="Payroll" asp-action="ViewPayroll">Approval</a></li>
                                     <li><a class="dropdown-item" asp-area="Payroll" asp-controller="Payroll" asp-action="DeleteFile">Delete File</a></li>
-                                    <li><a class="dropdown-item" asp-area="Payroll" asp-controller="Payroll" asp-action="Totable">Users</a></li>
+                                    <li><a class="dropdown-item" asp-area="Payroll" asp-controller="Payroll" asp-action="Completed">Completed</a></li>
+                                    <li><a class="dropdown-item" asp-area="Payroll" asp-controller="Payroll" asp-action="UserAccount">User Approval</a></li>
+                                }
+                                else if ((string)ViewData["SessionType"] == "OPERATIONSAREAMANAGER" || (string)ViewData["SessionType"] == "ASSISTANTOPERATIONSMANAGER")
+                                {
+                                    <li><a class="dropdown-item" asp-area="Payroll" asp-controller="Payroll" asp-action="RequestPayroll">Add DTR</a></li>
+                                    <li><a class="dropdown-item" asp-area="Payroll" asp-controller="Payroll" asp-action="ViewPayroll">Approval</a></li>
+                                    <li><a class="dropdown-item" asp-area="Payroll" asp-controller="Payroll" asp-action="DeleteFile">Delete File</a></li>
+                                    <li><a class="dropdown-item" asp-area="Payroll" asp-controller="Payroll" asp-action="Completed">Completed</a></li>
                                 }
                                 else
                                 {
                                     <li><a class="dropdown-item" asp-area="Payroll" asp-controller="Payroll" asp-action="ViewPayroll">Approval</a></li>
                                     <li><a class="dropdown-item" asp-area="Payroll" asp-controller="Payroll" asp-action="DeleteFile">Delete File</a></li>
                                     <li><a class="dropdown-item" asp-area="Payroll" asp-controller="Payroll" asp-action="Completed">Completed</a></li>
-                                    <li><a class="dropdown-item" asp-area="Payroll" asp-controller="Payroll" asp-action="Totable">Users</a></li>
+                                    @* <li><a class="dropdown-item" asp-area="Payroll" asp-controller="Payroll" asp-action="MigrateUser">Users</a></li> *@
+                                    <li><a class="dropdown-item" asp-area="Payroll" asp-controller="Payroll" asp-action="MigrateSites">MigrateSites</a></li>
                                 }
                             </ul>
                         </li>
@@ -71,6 +88,8 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.11.7/umd/popper.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/selectize.js/0.15.2/js/selectize.min.js"></script>    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.panzoom/3.2.2/jquery.panzoom.min.js"></script>
     <script src="~/js/site.js"></script>
     @await RenderSectionAsync("Scripts", required: false)
     <script>

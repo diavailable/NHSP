@@ -70,9 +70,28 @@ namespace NHSP.Models
         public int? ApproveSOM { get; set; }
         public DateTime? ApproveSOMDate { get; set; }
         public int? ApproveIM { get; set; }
-        public DateTime? ApproveIMDate { get; set; }
+        public DateTime? ApprovePODate { get; set; }
         public int? ApproveACC { get; set; }
         public DateTime? ApproveACCDate { get; set; }
         public DateTime? Release { get; set; }
+    }
+    public class RequestSites
+    {
+        [Key]
+        public int SiteId { get; set; }
+        public string Sitename { get; set; }
+        public string Status { get; set; }
+        public DateTime? AddedDate { get; set; }
+        public DateTime? ApproveOMDate { get; set; }
+        public DateTime? ApproveSOMDate { get; set; }
+        public DateTime? ApprovePODate { get; set; }
+        public DateTime? ApproveACCDate { get; set; }
+        public DateTime? Release { get; set; }
+        public int FileId { get; set; }
+        public int? SiteSOM { get; set; }
+        public int? SiteOM { get; set; }
+        public int? SiteSCTK { get; set; }
+        public int Payroll { get; set; }
+        public int PayrollStatus { get; set; }
     }
 }

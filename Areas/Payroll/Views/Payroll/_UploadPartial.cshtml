@@ -1,25 +1,47 @@
 ﻿@model NHSP.Areas.Payroll.Models.FileModel
 
-<div class="modal-header">
-    <h5 class="modal-title" id="uploadModalLabel">Upload File</h5>
-    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-</div>
-<div class="modal-body">
-    <h1>@Model.SiteName</h1>
-    <form id="uploadForm" method="post" enctype="multipart/form-data" asp-area="Payroll" asp-controller="Payroll" asp-action="Upload">
+<form id="uploadForm" method="post" enctype="multipart/form-data" asp-area="Payroll" asp-controller="Payroll" asp-action="Upload">
+    <div class="modal-body">
+        <h1>@Model.SiteName</h1>
         <input type="hidden" name="SiteId" value="@Model.SiteId" />
+
         <div class="mb-3">
             <label for="formFile" class="form-label">Choose file</label>
             <input class="form-control" type="file" id="formFile" name="UploadFile">
-            <div class="text-danger" id="fileError">@Html.ValidationMessageFor(m => m.UploadFile)</div>
+            <div class="text-danger">@Html.ValidationMessageFor(m => m.UploadFile)</div> 
         </div>
+
         @if (ViewBag.SuccessMessage != null)
         {
-            <div class="text-success">@ViewBag.SuccessMessage</div>
+            <div class="text-success">@ViewBag.SuccessMessage</div> 
         }
+    </div>
+    <div class="modal-footer">
         <button type="submit" class="btn btn-primary">Upload</button>
-    </form>
-</div>
-<div class="modal-footer">
-    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-</div>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+    </div>
+</form>
+
+@* <script>
+    $(document).ready(function () {
+        $("#uploadForm").submit(function (e) {
+            e.preventDefault(); 
+
+            var formData = new FormData(this);
+
+            $.ajax({
+                url: $(this).attr("action"),
+                type: $(this).attr("method"),
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function (response) {
+                    $("#uploadModalBody").html(response); 
+                },
+                error: function () {
+                    $("#uploadMessage").html('<div class="text-danger">An error occurred. Please try again.</div>');
+                }
+            });
+        });
+    });
+</script> *@

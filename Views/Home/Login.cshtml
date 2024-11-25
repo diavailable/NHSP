@@ -18,7 +18,7 @@
                     <h4>User Login</h4>
                 </div>
                 <div class="card-body">
-                    <form id="loginform" asp-controller="Home" asp-action="Selection">
+                    <form asp-controller="Home" asp-action="Login" method="post">
                         <div asp-validation-summary="All" class="text-danger mb-3"></div>
                         <div class="mb-3">
                             <label asp-for="Username" class="form-label"></label>
@@ -29,7 +29,7 @@
                             <input asp-for="Password" type="password" class="form-control" />
                         </div>
                         <div class="d-grid">
-                            <input id="login" type="submit" value="Login" class="btn btn-primary" />
+                            <input type="submit" value="Login" class="btn btn-primary" />
                         </div>
                     </form>
                 </div>
