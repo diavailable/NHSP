@@ -30,7 +30,7 @@
                     {
                         <tr>
                             <td class="text-center text-nowrap">@site.Sitename</td>
-                            @switch (site.PayrollStatus)
+                            @switch (site.Payroll)
                             {
                                 case null:
                                     <td class="text-center text-nowrap">N/A</td>
@@ -41,7 +41,7 @@
                                     break;
                                 case 0:
                                     <td class="text-center text-nowrap">N/A</td>
-                                    <td class="text-center text-nowrap">Release</td>
+                                    <td class="text-center text-nowrap">@site.Release</td>
                                     <td class="text-center text-nowrap">
                                         <button type="submit" class="btn btn-primary py-0" data-siteid="@site.SiteId" id="showUpload_@site.SiteId">Upload</button>
                                     </td>
@@ -93,8 +93,8 @@
                         </tr>
                     }
                 }
-            </tbody>
         </table>
+            </tbody>
     </div>
     <div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadModalLabel" aria-hidden="true">
         <div class="modal-dialog">
@@ -172,18 +172,53 @@
             event.preventDefault();
 
             var formData = new FormData(this);
-
+            $("#uploadForm button[type='submit']").prop("disabled", true);
             $.ajax({
                 url: '/Payroll/Payroll/Upload',
                 type: 'POST',
                 data: formData,
-                processData: true,
+                processData: false,
                 contentType: false,
                 success: function (response) {
-                    $("#uploadModalBody").html(response);
+                    $('#uploadModalBody').html(response);
+                    if ($(response).find('.text-success').length > 0) {
+                        setTimeout(function () {
+                            $("#uploadForm button[type='submit']").prop("disabled", false);
+                            location.reload();
+                        }, 1000);
+                    }
+                    else {
+                        $('#uploadModalBody').html(response);
+                    }
                 },
                 error: function () {
                     $("#uploadMessage").html('<div class="text-danger">An error occurred. Please try again.</div>');
+                }
+            });
+        });
+
+        $('button[id^="showDelete_"]').click(function (event) {
+            event.preventDefault();
+
+            var siteId = $(this).data('siteid');
+
+            if (!siteId) {
+                alert("Site ID is missing.");
+                return;
+            }
+
+            $.ajax({
+                url: '/Payroll/Payroll/DeleteDtrPartial',
+                type: 'GET',
+                data: { SiteId: siteId },
+                success: function (response) {
+                    $('#uploadModalBody').html(response);
+
+                    var uploadModal = new bootstrap.Modal(document.getElementById('uploadModal'));
+                    uploadModal.show();
+                },
+                error: function () {
+                    alert('Error occurred while fetching the upload modal.');
                 }
             });
         });
@@ -193,18 +228,14 @@
             var formData = new FormData(this);
 
             $.ajax({
-                url: $(this).attr('action'),
+                url: '/Payroll/Payroll/DeleteDtr',
                 type: 'POST',
                 data: formData,
                 processData: false,
                 contentType: false,
                 success: function (response) {
-                    console.log("Delete Successful", response);
-
-                    var deleteModal = bootstrap.Modal.getInstance(document.getElementById('deletedtr'));
-                    if (deleteModal) {
-                        deleteModal.hide();
-                    }
+                    $('#deletedtr').modal('hide');
+                    location.reload();
                 },
                 error: function (xhr, status, error) {
                     console.log("Delete Failed", error);

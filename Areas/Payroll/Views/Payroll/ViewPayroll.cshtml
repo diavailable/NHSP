@@ -36,11 +36,11 @@
                     foreach (var item in ViewBag.Approvals)
                     {
                         <tr>
-                            <td class="text-center text-nowrap">@item.SiteName</td>
+                            <td class="text-center text-nowrap">@item.Sitename</td>
                             <td class="text-center text-nowrap">
-                                <button type="button" class="btn btn-primary py-0" id="preview_@item.FileId" data-filename="@item.FileName">Preview</button>
+                                <button type="button" class="btn btn-primary py-0" id="preview_@item.SiteId" data-siteid="@item.SiteId">Preview</button>
                             </td>
-                            @switch (item.Status)
+                            @switch (item.Payroll)
                             {
                                 case 1:
                                     <td class="text-center text-nowrap">Pending (OM)</td>
@@ -173,12 +173,12 @@
 
         $('button[id^="preview_"]').click(function (event) {
             event.preventDefault();
-            var filename = $(this).data("filename");
+            var siteid = $(this).data("siteid");
 
             $.ajax({
                 url: "/Payroll/Payroll/PRpreview",
                 type: "GET",
-                data: { fileName: filename },
+                data: { siteId: siteid },
                 success: function (data) {
                     $("#previewModalBody").html(data);
                     var previewModal = new bootstrap.Modal(document.getElementById("previewModal"));

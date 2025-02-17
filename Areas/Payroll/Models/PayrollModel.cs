@@ -12,11 +12,18 @@ namespace NHSP.Areas.Payroll.Models
     }
     public class FileModel
     {
-        [BindRequired]
         [DataType(DataType.Upload)]
         public IFormFile UploadFile { get; set; }
         public string FileName { get; set; }
-        public string SiteId { get; set; }
+        public List<string> FileNames { get; set; }
+        public int SiteId { get; set; }
+        public string SiteName { get; set; }
+    }
+    public class PreviewModel
+    {       
+        public string FileId { get; set; }
+        public string FileName { get; set; }
+        public int? SiteId { get; set; }
         public string SiteName { get; set; }
     }
     public class ViewPayrollModel

@@ -87,25 +87,20 @@ namespace NHSP.Payroll.Formula
             {
                 return new List<string>();
             }
-
-            // Retrieve all files with their full names (including extensions)
             var files = Directory.GetFiles(_uploadPath).ToList();
 
             if (!string.IsNullOrEmpty(searchQuery))
             {
-                // Filter based on file names without extensions
                 files = files
                     .Where(file => Path.GetFileNameWithoutExtension(file)
-                        .Equals(searchQuery, StringComparison.OrdinalIgnoreCase)) // Exact match without extension
+                        .Equals(searchQuery, StringComparison.OrdinalIgnoreCase)) 
                     .ToList();
             }
 
-            // Return full file names with extensions
             var fullfilename = files.Select(Path.GetFileName).ToList();
             return await Task.FromResult(fullfilename);
         }
     }
-    // string extract
     public static class StringEdit
     {
         public static string RightStr(string input)

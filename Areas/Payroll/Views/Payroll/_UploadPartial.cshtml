@@ -7,7 +7,7 @@
 
         <div class="mb-3">
             <label for="formFile" class="form-label">Choose file</label>
-            <input class="form-control" type="file" id="formFile" name="UploadFile">
+            <input class="form-control" type="file" id="UploadFile" name="UploadFile" multiple>
             <div class="text-danger">@Html.ValidationMessageFor(m => m.UploadFile)</div> 
         </div>
 
@@ -21,27 +21,3 @@
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
     </div>
 </form>
-
-@* <script>
-    $(document).ready(function () {
-        $("#uploadForm").submit(function (e) {
-            e.preventDefault(); 
-
-            var formData = new FormData(this);
-
-            $.ajax({
-                url: $(this).attr("action"),
-                type: $(this).attr("method"),
-                data: formData,
-                processData: false,
-                contentType: false,
-                success: function (response) {
-                    $("#uploadModalBody").html(response); 
-                },
-                error: function () {
-                    $("#uploadMessage").html('<div class="text-danger">An error occurred. Please try again.</div>');
-                }
-            });
-        });
-    });
-</script> *@

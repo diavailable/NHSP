@@ -1,165 +1,164 @@
-﻿@model NHSP.Areas.Payroll.Models.FileModel
+﻿@model List<NHSP.Areas.Payroll.Models.PreviewModel>
 
 <div class="modal-body-preview">
-    <div class="zoom-container">
-        <div class="controls">
-            <button id="zoomIn">Zoom In 🔍+</button>
-            <button id="zoomOut">Zoom Out 🔍-</button>
-            <button id="resetZoom">Reset 🔄</button>
-@*             <button id="moveLeft">⬅️</button>
-            <button id="moveRight">➡️</button>
-            <button id="moveUp">⬆️</button>
-            <button id="moveDown">⬇️</button> *@
-        </div>
-
-        <div class="image-wrapper">
-            <img id="zoomImage" src="@Url.Content("~/PayrollFiles/" + Model.FileName)" />
+    <div class="controls">
+        <button id="zoomIn">Zoom In 🔍+</button>
+        <button id="zoomOut">Zoom Out 🔍-</button>
+        <button id="resetZoom">Reset 🔄</button>
+    </div>
+    <div class="zoom-container">      
+        <div class="image-slider">
+            @if (Model != null)
+            {
+                int index = 0;
+                @foreach (var file in Model)
+                {
+                    <div class="image-wrapper @(index == 0 ? "active" : "hidden")" data-index="@index">
+                        <div class="image-box">
+                            <img class="zoomImage" src="@Url.Content("~/PayrollFiles/" + file.FileName)" alt="Payroll File"/>
+                        </div>
+                    </div>
+                    index++;
+                }
+            }
+            else
+            {
+                <p>No images available.</p>
+            }
         </div>
     </div>
 </div>
-<div class="modal-footer">
-    <form asp-area="Payroll" asp-controller="Payroll" asp-action="Download" method="post">
-        <input type="hidden" name="fileName" value="@Model.FileName" />
-        <button type="submit" class="btn btn-success">Download File</button>
-    </form>
-    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+
+<div class="modal-footer d-flex flex-column">
+    <div class="d-flex justify-content-center w-100 mb-2">
+        <button id="prevImage" class="btn btn-primary me-2">⬅ Prev</button>
+
+        <form asp-area="Payroll" asp-controller="Payroll" asp-action="Download" method="post">
+            <input type="hidden" id="currentFileName" name="fileName" value="" />
+            <button type="submit" class="btn btn-success mx-2">
+                &DoubleDownArrow;
+            </button>
+        </form>
+
+        <button id="nextImage" class="btn btn-primary ms-2">Next ➡</button>
+    </div>
+
+    <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Close</button>
 </div>
+
 
 <script>
     $(document).ready(function () {
-        initializeZoomControls();
-    });
+        let currentIndex = 0;
+        const images = $(".image-wrapper");
+        const totalImages = images.length;
+        let zoomLevel = 1;
+        let isDragging = false;
+        let startX, startY, translateX = 0, translateY = 0;
+        let initialDistance = 0;
+        let isPinching = false;
 
-    function initializeZoomControls() {
-        let img = $("#zoomImage");
-        let scale = 1;
-        let translateX = 0;
-        let translateY = 0;
+        function showImage(index) {
+            images.removeClass("active").hide();
+            const activeImageWrapper = images.eq(index);
+            activeImageWrapper.addClass("active").show();
 
-        function updateTransform() {
-            img.css("transform", `scale(${scale}) translate(${translateX}px, ${translateY}px)`);
-        }
-
-        $(document).on("click", "#zoomIn", function () {
-            scale += 0.5;
-            updateTransform();
-        });
-
-        $(document).on("click", "#zoomOut", function () {
-            if (scale > 0.4) {
-                scale -= 0.5;
-                updateTransform();
-            }
-        });
-
-        $(document).on("click", "#resetZoom", function () {
-            scale = 1;
+            zoomLevel = 1;
             translateX = 0;
             translateY = 0;
-            updateTransform();
+
+            activeImageWrapper.find(".zoomImage").css({
+                "transform": `scale(1) translate(0px, 0px)`,
+                "width": "100%",
+                "height": "100%",
+                "max-height": "none",
+                "max-width": "none",
+                "object-fit": "contain"
+            });
+
+            const fileName = activeImageWrapper.find("img").attr("src").split("/").pop();
+            $("#currentFileName").val(fileName);
+        }
+
+        $("#prevImage").click(function () {
+            currentIndex = (currentIndex - 1 + totalImages) % totalImages;
+            showImage(currentIndex);
         });
 
-        $(document).on("click", "#moveLeft", function () {
-            translateX -= 20;
-            updateTransform();
+        $("#nextImage").click(function () {
+            currentIndex = (currentIndex + 1) % totalImages;
+            showImage(currentIndex);
         });
 
-        $(document).on("click", "#moveRight", function () {
-            translateX += 20;
-            updateTransform();
+        $("#zoomIn").click(function () {
+            zoomLevel += 0.5;
+            $(".active .zoomImage").css("transform", `scale(${zoomLevel}) translate(${translateX}px, ${translateY}px)`);
         });
 
-        $(document).on("click", "#moveUp", function () {
-            translateY -= 20;
-            updateTransform();
+        $("#zoomOut").click(function () {
+            if (zoomLevel > 1) {
+                zoomLevel -= 0.5;
+                $(".active .zoomImage").css("transform", `scale(${zoomLevel}) translate(${translateX}px, ${translateY}px)`);
+            }
         });
 
-        $(document).on("click", "#moveDown", function () {
-            translateY += 20;
-            updateTransform();
+        $("#resetZoom").click(function () {
+            zoomLevel = 1;
+            translateX = 0;
+            translateY = 0;
+            $(".active .zoomImage").css("transform", `scale(1) translate(0px, 0px)`);
         });
 
-        let isDragging = false;
-        let startX, startY;
+        $(".zoomImage").on("mousedown touchstart", function (e) {
+            if (e.touches && e.touches.length === 2) {
+                isPinching = true;
+                initialDistance = getDistance(e.touches[0], e.touches[1]);
+                return;
+            }
 
-        img.on("mousedown", function (event) {
             isDragging = true;
-            startX = event.clientX;
-            startY = event.clientY;
-            img.css("cursor", "grabbing");
+            startX = e.pageX || e.originalEvent.touches[0].pageX;
+            startY = e.pageY || e.originalEvent.touches[0].pageY;
+            $(this).css("cursor", "grabbing");
         });
 
-        $(document).on("mousemove", function (event) {
-            if (isDragging) {
-                translateX += event.clientX - startX;
-                translateY += event.clientY - startY;
-                startX = event.clientX;
-                startY = event.clientY;
-                updateTransform();
+        $(document).on("mousemove touchmove", function (e) {
+            if (isPinching && e.touches.length === 2) {
+                let newDistance = getDistance(e.touches[0], e.touches[1]);
+                let zoomChange = (newDistance / initialDistance);
+                zoomLevel = Math.max(1, Math.min(zoomLevel * zoomChange, 5)); 
+                $(".active .zoomImage").css("transform", `scale(${zoomLevel}) translate(${translateX}px, ${translateY}px)`);
+                initialDistance = newDistance;
+                return;
             }
+
+            if (!isDragging) return;
+
+            let moveX = (e.pageX || e.originalEvent.touches[0].pageX) - startX;
+            let moveY = (e.pageY || e.originalEvent.touches[0].pageY) - startY;
+
+            let speedFactor = Math.max(zoomLevel, 1);
+            translateX += moveX / speedFactor;
+            translateY += moveY / speedFactor;
+
+            $(".active .zoomImage").css("transform", `scale(${zoomLevel}) translate(${translateX}px, ${translateY}px)`);
+
+            startX = e.pageX || e.originalEvent.touches[0].pageX;
+            startY = e.pageY || e.originalEvent.touches[0].pageY;
         });
 
-        $(document).on("mouseup", function () {
+        $(document).on("mouseup touchend", function () {
             isDragging = false;
-            img.css("cursor", "grab");
+            isPinching = false;
+            $(".zoomImage").css("cursor", "grab");
         });
 
-        img.on("touchstart", function (event) {
-            if (event.touches.length === 2) {
-                event.preventDefault();
-            }
-        });
+        function getDistance(touch1, touch2) {
+            let dx = touch1.pageX - touch2.pageX;
+            let dy = touch1.pageY - touch2.pageY;
+            return Math.sqrt(dx * dx + dy * dy);
+        }
 
-        // Pinch-to-Zoom (Mobile Touch)
-        let initialDistance = 0;
-        let initialScale = scale;
-
-        img.on("touchmove", function (event) {
-            if (event.touches.length === 2) {
-                event.preventDefault();
-                let touch1 = event.touches[0];
-                let touch2 = event.touches[1];
-
-                let currentDistance = Math.hypot(
-                    touch2.pageX - touch1.pageX,
-                    touch2.pageY - touch1.pageY
-                );
-
-                if (initialDistance === 0) {
-                    initialDistance = currentDistance;
-                    initialScale = scale;
-                } else {
-                    scale = initialScale * (currentDistance / initialDistance);
-                    updateTransform();
-                }
-            }
-        });
-
-        img.on("touchend", function () {
-            initialDistance = 0;
-        });
-
-        img.on("touchstart", function (event) {
-            if (event.touches.length === 1) {
-                isDragging = true;
-                startX = event.touches[0].clientX;
-                startY = event.touches[0].clientY;
-            }
-        });
-
-        img.on("touchmove", function (event) {
-            if (isDragging && event.touches.length === 1) {
-                let touch = event.touches[0];
-                translateX += touch.clientX - startX;
-                translateY += touch.clientY - startY;
-                startX = touch.clientX;
-                startY = touch.clientY;
-                updateTransform();
-            }
-        });
-
-        img.on("touchend", function () {
-            isDragging = false;
-        });
-    }
+        showImage(currentIndex);
+    });
 </script>
