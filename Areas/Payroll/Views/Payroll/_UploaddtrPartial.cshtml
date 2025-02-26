@@ -1,0 +1,19 @@
+﻿ @model NHSP.Areas.Payroll.Models.FileModel
+
+<div class="modal-body">
+    <h1>@Model.SiteName</h1>
+    <form id="uploadForm" method="post" enctype="multipart/form-data" asp-area="Payroll" asp-controller="Payroll" asp-action="Uploaddtr">
+        <input type="hidden" name="SiteId" value="@Model.SiteId" />
+        <div class="mb-3">
+            <input class="form-control" asp-for="UploadFile" type="file" multiple/>
+            <div class="text-danger">@Html.ValidationMessageFor(m => m.UploadFile)</div>
+        </div>
+        @if (ViewBag.SuccessMessage != null)
+        {
+            <div class="text-success">@ViewBag.SuccessMessage</div>
+        }
+        <div class="d-grid">
+            <button id="uploadBtn" type="submit" class="btn btn-primary">Upload</button>
+        </div>
+    </form>
+</div>

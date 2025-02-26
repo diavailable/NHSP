@@ -18,6 +18,8 @@ builder.Services.AddControllersWithViews()
     {
         options.ViewLocationFormats.Add("/Views/Shared/{0}.cshtml");
     });
+builder.Services.AddHttpClient();
+
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromMinutes(60); // Set session timeout

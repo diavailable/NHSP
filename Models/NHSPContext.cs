@@ -31,6 +31,7 @@ namespace NHSP.Models
         public int FileId { get; set; }
         public string? FileName { get; set; }
         public string? FileString { get; set; }
+        public string? FileType { get; set; }
         public int? SiteId { get; set; }
         public string? SiteName { get; set; }
         public int? AddedBy { get; set; }
@@ -62,7 +63,7 @@ namespace NHSP.Models
         public string Password { get; set; }
         public string UserStatus { get; set; }
         public string ContactNo { get; set; }
-        public int? SiteId { get; set; }
+        public int? Bypass { get; set; }
     }
     public class Sites
     {

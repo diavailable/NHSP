@@ -12,38 +12,111 @@
     <h1 style="text-align:center">Payroll Request</h1>
 </div>
 <div>
-    <input class="form-control" type="text" id="search" placeholder="Search here" onkeyup="searchTable()">
+    <input class="form-control" type="text" id="search" oninput="searchReload()" placeholder="Search here" onkeyup="searchTable()">
 </div>
-<div>
+<div style="overflow-x: auto; max-width: 100%;">
     <table class="table table-striped table-bordered">
         <thead>
             <tr>
                 <th class="text-center text-uppercase">Site</th>
+                <th class="text-center text-uppercase">Status</th>
                 <th class="text-center text-uppercase">Add Payroll</th>
-                <th class="text-center text-uppercase">File</th>
+                <th class="text-center text-uppercase">File</th>                
             </tr>
         </thead>
         <tbody id="myTable">
-            @if (ViewBag.Sites != null)
+            @if (ViewBag.payroll != null)
             {
-                foreach (var sr in ViewBag.Sites)
+                foreach (var sr in ViewBag.payroll)
                 {
                     <tr>
                         <td class="text-center text-nowrap">@sr.Sitename</td>
-                        <td class="text-center text-nowrap">
-                            <button type="submit" class="btn btn-primary py-0" data-siteid="@sr.SiteId" id="showUpload_@sr.SiteId">Add Payroll</button>
-                        </td>
-                        <td class="text-center text-nowrap">
-                            <button type="button" class="btn btn-primary py-0" id="preview_@sr.SiteId" data-filename="@sr.SiteId">Preview</button>
-                        </td>
+                        @if (sr.Payroll == 1)
+                        {
+                            <td class="text-center text-nowrap">Approval (OM) @sr.FileAddedDate</td>
+                        }
+                        else if (sr.Payroll == 2)
+                        {
+                            <td class="text-center text-nowrap">Approval (SOM) @sr.FileApproveOMDate</td>
+                        }
+                        else if (sr.Payroll == 3)
+                        {
+                            <td class="text-center text-nowrap">Approval (ACC) @sr.FileApproveSOMDate</td>
+                        }
+                        else if (sr.Payroll == 4)
+                        {
+                            <td class="text-center text-nowrap">Payroll in progress @sr.FileApprovePODate</td>
+                        }
+                        else
+                        {
+                            <td class="text-center text-nowrap">N/A</td>
+                        }
+                        @if ((sr.Payroll == 0 && sr.FileStatus == 3) || (sr.Payroll == 4 && sr.FileStatus == 3) || (sr.Payroll == 4 && sr.FileStatus == 4))
+                        {
+                            <td class="text-center text-nowrap">
+                                <button type="button" class="btn btn-danger py-0" data-bs-toggle="modal" data-bs-target="#deleteModal_@sr.SiteId">Delete</button>
+
+                                <div class="modal fade" id="deleteModal_@sr.SiteId" tabindex="-1" aria-labelledby="deleteModalLabel_@sr.SiteId" aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="deleteModalLabel_@sr.SiteId">Confirm Decline</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <form asp-action="Deletepr" asp-controller="Payroll" asp-area="Payroll">
+                                                <div class="modal-body">
+                                                    <input type="hidden" name="siteId" value="@sr.SiteId" />
+                                                    <p>Are you sure you want to delete?</p>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <input type="hidden" name="siteId" value="@sr.SiteId" />
+                                                    <button type="submit" class="btn btn-danger py-0" data-siteid="@sr.SiteId">Delete</button>
+                                                    <button type="button" class="btn btn-secondary py-0" data-bs-dismiss="modal">Cancel</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="text-center text-nowrap">
+                                <button type="button" class="btn btn-primary py-0" id="preview_@sr.SiteId" data-siteid="@sr.SiteId" data-filetype="Payroll">Preview</button>
+                            </td>
+                        }                        
+                        else if (sr.Payroll == 4 && sr.FileStatus == 2)
+                        {
+                            <td class="text-center text-nowrap">
+                                <button type="submit" class="btn btn-primary py-0" data-siteid="@sr.SiteId" id="showUpload_@sr.SiteId" disabled>Add Payroll</button>
+                            </td>
+                            <td class="text-center text-nowrap">
+                                <button type="button" class="btn btn-primary py-0" id="preview_@sr.SiteId" data-siteid="@sr.SiteId" data-filetype="Payroll">Preview</button>
+                            </td>
+                        }
+                        else if (sr.Payroll == 4 && sr.FileStatus == null || sr.FileStatus == 0)
+                        {
+                            <td class="text-center text-nowrap">
+                                <button type="submit" class="btn btn-primary py-0" data-siteid="@sr.SiteId" id="showUpload_@sr.SiteId">Add Payroll</button>
+                            </td>
+                            <td class="text-center text-nowrap">
+                                <button type="button" class="btn btn-primary py-0" id="preview_@sr.SiteId" data-siteid="@sr.SiteId" data-filetype="Payroll" disabled>Preview</button>
+                            </td>                            
+                        }
+                        else
+                        {
+                            <td class="text-center text-nowrap">
+                                <button type="submit" class="btn btn-danger py-0" data-siteid="@sr.SiteId" id="showUpload_@sr.SiteId" disabled>Add Payroll</button>
+                            </td>
+                            <td class="text-center text-nowrap">
+                                <button type="button" class="btn btn-primary py-0" id="preview_@sr.SiteId" data-siteid="@sr.SiteId" data-filetype="Payroll" disabled>Preview</button>
+                            </td>
+                        }
                     </tr>
                 }
             }
             else
             {
                 <tr>
-                    <td class="text-center text-nowrap">if symptoms persists</td>
-                    <td class="text-center text-nowrap">consult it koi!?</td>
+                    <td class="text-center text-nowrap">if issue persist contact IT</td>
+                    <td class="text-center text-nowrap">https://www.facebook.com/adrian.d2nd</td>
                 </tr>
             }
         </tbody>
@@ -71,6 +144,12 @@
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
+    function searchReload() {
+        const input = document.getElementById("search");
+        const filter = input.value;
+        sessionStorage.setItem("searchTerm", input.value);
+        searchTable(filter);
+    }
     function searchTable() {
         var input, filter, table, tr, td, i, txtValue;
         input = document.getElementById("search");
@@ -101,7 +180,7 @@
             $.ajax({
                 url: '/Payroll/Payroll/AddPayrollPartial',
                 type: 'GET',
-                data: { SiteId: siteId },
+                data: { siteId: siteId },
                 success: function (data) {
                     $('#uploadModalBody').html(data);
                     var uploadModal = new bootstrap.Modal(document.getElementById('uploadModal'));
@@ -127,6 +206,10 @@
                 contentType: false,
                 success: function (response) {
                     $('#uploadModalBody').html(response);
+
+                    setTimeout(function () {
+                        location.reload();
+                    }, 1000);
                 },
                 error: function () {
                     alert('File upload failed.');
@@ -136,12 +219,13 @@
 
         $('button[id^="preview_"]').click(function (event) {
             event.preventDefault();
-            var filename = $(this).data("filename");
+            var siteid = $(this).data("siteid");
+            var filetype = $(this).data("filetype");
 
             $.ajax({
                 url: "/Payroll/Payroll/PRpreview",
                 type: "GET",
-                data: { fileName: filename },
+                data: { siteId: siteid, fileType: filetype },
                 success: function (data) {
                     $("#previewModalBody").html(data);
                     var previewModal = new bootstrap.Modal(document.getElementById("previewModal"));
@@ -164,5 +248,10 @@
                 }
             });
         });
+
+        const savedTerm = sessionStorage.getItem("searchTerm") || "";
+        const input = document.getElementById("search");
+        input.value = savedTerm;
+        searchTable(savedTerm);
     });
 </script>

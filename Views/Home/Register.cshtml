@@ -34,7 +34,13 @@
                         </div>
                         <div class="mb-3">
                             <label asp-for="Position" class="form-label"></label>
-                            <input asp-for="Position" class="form-control" />
+                            <select asp-for="Position" class="form-select" asp-items="ViewBag.Positions">
+                                <option value="">-- Select Position --</option>
+                                <option value="Site Coordinator">Site Coordinator</option>
+                                <option value="Time Keeper">Time Keeper</option>
+                                <option value="Operations Area Manager">Operations Manager/Project Manager</option>
+                                <option value="Senior Operation Head">Sr. Operations Manager</option>
+                            </select>
                         </div>
                         <div class="mb-3">
                             <label asp-for="UserType" class="form-label">User Type</label>

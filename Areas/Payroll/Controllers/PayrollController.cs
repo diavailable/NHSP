@@ -1,33 +1,11 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using System.Diagnostics;
-using Microsoft.Extensions.Configuration;
-using System.Data.SqlClient;
 using Microsoft.Data.SqlClient;
-using System.Data;
-using System;
-using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Policy;
-using System.Threading.Tasks;
-using System.Xml.Linq;
-using System.Threading;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
-using System.Drawing;
-using System.ComponentModel;
-using System.Linq;
-using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
-using System.IO;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
-using Microsoft.AspNetCore.Hosting.Server;
-using Microsoft.Extensions.Hosting.Internal;
-using System.Globalization;
-using static System.Net.WebRequestMethods;
-using NHSP.Payroll.Formula;
 using NHSP.Areas.Payroll.Models;
 using NHSP.Models;
-using static Azure.Core.HttpHeader;
-using System.Runtime.InteropServices.JavaScript;
-using Microsoft.AspNetCore.Rewrite;
+using NHSP.Payroll.Formula;
+using System.Data;
+using System.Globalization;
 
 namespace NHSP.Areas.Payroll.Controllers
 {
@@ -36,6 +14,7 @@ namespace NHSP.Areas.Payroll.Controllers
     {
         private readonly NHSPContext _context1;
         private readonly DatabaseContext _context2;
+        private readonly HttpClient _httpClient;
         const string SessionName = "_Name";
         const string SessionLayout = "_Layout";
         const string SessionType = "_Type";
@@ -48,7 +27,7 @@ namespace NHSP.Areas.Payroll.Controllers
         private readonly FileUploadService _fileUploadPayroll;
         private readonly FileUploadService _fileUploadService;
         private readonly IWebHostEnvironment _hostingEnvironment;
-        public PayrollController(IConfiguration configuration, IWebHostEnvironment hostingEnvironment, NHSPContext context1, DatabaseContext context2, FileUploadService fileUploadPayroll)
+        public PayrollController(IConfiguration configuration, IWebHostEnvironment hostingEnvironment, NHSPContext context1, DatabaseContext context2, FileUploadService fileUploadPayroll, HttpClient httpClient)
         {
             _configuration = configuration;
             con1 = new SqlConnection(_configuration.GetConnectionString("nhspConnection"));
@@ -58,8 +37,8 @@ namespace NHSP.Areas.Payroll.Controllers
             _fileUploadPayroll = fileUploadPayroll;
             _hostingEnvironment = hostingEnvironment;
             _fileUploadService = new FileUploadService(Path.Combine(_hostingEnvironment.WebRootPath, "PayrollFiles"));
+            _httpClient = httpClient;
         }
-
         public void GetSession()
         {
             ViewData["SessionType"] = HttpContext.Session.GetString(SessionType);
@@ -77,7 +56,7 @@ namespace NHSP.Areas.Payroll.Controllers
             }
             return View();
         }
-        public IActionResult RequestPayroll()
+        public IActionResult SiteDTR()
         {
             GetSession();
             if (HttpContext.Session.GetString(SessionId) == null)
@@ -88,38 +67,39 @@ namespace NHSP.Areas.Payroll.Controllers
 
             var sitequery = _context1.Sites
                             .Where(s => s.SiteSCTK == sesid || s.SiteOM == sesid || s.SiteSOM == sesid)
-                         .GroupJoin(
-                             _context1.payroll.Where(p => p.Status == 1), 
-                             site => site.SiteId,                   
-                             payroll => payroll.SiteId,             
-                             (site, payrollGroup) => new
-                             {
-                                 Site = site,
-                                 LatestPayroll = payrollGroup
-                                     .OrderByDescending(p => p.AddedDate) // Get the latest payroll
-                                     .FirstOrDefault()
-                             }
-                         )
-                         .Select(e => new
-                         {
-                             e.Site.SiteId,
-                             e.Site.Sitename,
-                             e.Site.Status,
-                             e.Site.SiteSOM,
-                             e.Site.SiteOM,
-                             e.Site.SiteSCTK,
-                             e.Site.Payroll,
-                             AddedDate = e.LatestPayroll != null ? e.LatestPayroll.AddedDate : (DateTime?)null,
-                             FileId = e.LatestPayroll != null ? e.LatestPayroll.FileId : (int?)null,
-                             ApproveOMDate = e.LatestPayroll != null ? e.LatestPayroll.ApproveOMDate : (DateTime?)null,
-                             ApproveSOMDate = e.LatestPayroll != null ? e.LatestPayroll.ApproveSOMDate : (DateTime?)null,
-                             ApprovePODate = e.LatestPayroll != null ? e.LatestPayroll.ApprovePODate : (DateTime?)null,
-                             ApproveACCDate = e.LatestPayroll != null ? e.LatestPayroll.ApproveACCDate : (DateTime?)null,
-                             Release = e.LatestPayroll != null ? e.LatestPayroll.Release : (DateTime?)null
-                         })
-                         .ToList();
+                            .GroupJoin(
+                                _context1.payroll.Where(p => p.Status == 1),
+                                site => site.SiteId,
+                                payroll => payroll.SiteId,
+                                (site, payrollGroup) => new
+                                {
+                                    Site = site,
+                                    LatestDTR = payrollGroup
+                                        .OrderByDescending(p => p.AddedDate)
+                                        .FirstOrDefault()
+                                }
+                            )
+                            .Select(e => new
+                            {
+                                e.Site.SiteId,
+                                e.Site.Sitename,
+                                e.Site.Status,
+                                e.Site.SiteSOM,
+                                e.Site.SiteOM,
+                                e.Site.SiteSCTK,
+                                e.Site.Payroll,
+                                AddedDate = e.LatestDTR != null ? e.LatestDTR.AddedDate : (DateTime?)null,
+                                FileId = e.LatestDTR != null ? e.LatestDTR.FileId : (int?)null,
+                                ApproveOMDate = e.LatestDTR != null ? e.LatestDTR.ApproveOMDate : (DateTime?)null,
+                                ApproveSOMDate = e.LatestDTR != null ? e.LatestDTR.ApproveSOMDate : (DateTime?)null,
+                                ApprovePODate = e.LatestDTR != null ? e.LatestDTR.ApprovePODate : (DateTime?)null,
+                                ApproveACCDate = e.LatestDTR != null ? e.LatestDTR.ApproveACCDate : (DateTime?)null,
+                                Release = e.LatestDTR != null ? e.LatestDTR.Release : (DateTime?)null,
+                                DTRstatus = e.LatestDTR != null ? e.LatestDTR.Status : (int?)null,
+                            })
+                            .ToList();
 
-            ViewBag.Site = sitequery.ToList();
+            ViewBag.Site = sitequery;
 
             return View();
         }
@@ -190,10 +170,10 @@ namespace NHSP.Areas.Payroll.Controllers
                 };
             }
 
-            return RedirectToAction("RequestPayroll", "Payroll");
+            return RedirectToAction("SiteDTR", "Payroll");
         }
         [HttpPost]
-        public async Task<IActionResult> Upload(FileModel pm, int siteId)
+        public async Task<IActionResult> Uploaddtr(FileModel pm, int siteId)
         {
             try
             {
@@ -203,13 +183,31 @@ namespace NHSP.Areas.Payroll.Controllers
                 {
                     return RedirectToAction("Login", "Home");
                 }
-                ModelState.Clear();
 
-                var files = Request.Form.Files;
-                if (files == null || files.Count == 0)
+                var model = _context1.Sites
+                            .Where(a => a.SiteId == siteId)
+                            .Select(a => new
+                            {
+                                SiteId = a.SiteId,
+                                a.Sitename,
+                                a.Status,
+                                a.SiteSOM,
+                                a.SiteOM,
+                                a.SiteSCTK
+                            });
+
+                var modelresult = model.FirstOrDefault();
+
+                var fm = new FileModel
+                {
+                    SiteId = modelresult.SiteId,
+                    SiteName = modelresult?.Sitename.ToString()
+                };
+
+                if (pm.UploadFile == null || !pm.UploadFile.Any())
                 {
                     ModelState.AddModelError("UploadFile", "Please select file to upload.");
-                    return PartialView("_UploadPartial", pm);
+                    return PartialView("_UploaddtrPartial", fm);
                 }
 
                 var allowedExtensions = new[] { ".xls", ".xlsx", ".png", ".jpeg", ".jpg" };
@@ -222,18 +220,18 @@ namespace NHSP.Areas.Payroll.Controllers
                 if (siteresult == null)
                 {
                     ModelState.AddModelError("SiteId", "Invalid site ID.");
-                    return PartialView("_UploadPartial", pm);
+                    return PartialView("_UploaddtrPartial", fm);
                 }
 
                 List<string> uploadedFiles = new List<string>();
                 int inc = 1;
-                foreach (var file in files)
+                foreach (var file in pm.UploadFile)
                 {
                     var extension = Path.GetExtension(file.FileName).ToLower();
                     if (!allowedExtensions.Contains(extension))
                     {
                         ModelState.AddModelError("UploadFile", $"Invalid file type: {file.FileName}. Only .xls, .xlsx, .png, .jpeg, .jpg allowed.");
-                        return PartialView("_UploadPartial", pm);
+                        return PartialView("_UploaddtrPartial", fm);
                     }
 
                     string fileformat = (extension == ".xlsx") ? Path.ChangeExtension(file.FileName, ".xls") : file.FileName;
@@ -244,13 +242,14 @@ namespace NHSP.Areas.Payroll.Controllers
                     if (string.IsNullOrEmpty(filePath))
                     {
                         ModelState.AddModelError("UploadFile", $"File upload failed: {file.FileName}");
-                        return PartialView("_UploadPartial", pm);
+                        return PartialView("_UploaddtrPartial", fm);
                     }
 
                     _context1.payroll.Add(new payroll
                     {
                         FileName = rawfilename,
                         FileString = filePath,
+                        FileType = "DTR",
                         SiteId = siteresult.SiteId,
                         SiteName = StringEdit.RightStr(siteresult.Sitename),
                         AddedBy = int.Parse(HttpContext.Session.GetString(SessionId)),
@@ -262,7 +261,23 @@ namespace NHSP.Areas.Payroll.Controllers
                     inc++;
                 }
 
-                _context1.Sites.Where(s => s.SiteId == siteId).ToList().ForEach(site => site.Payroll = 1);
+                int sesid = int.Parse(HttpContext.Session.GetString(SessionId));
+                var bypass = _context1.Users
+                    .Where(u => u.UserId == sesid)
+                    .Select(u => new
+                    {
+                        u.Bypass
+                    })
+                    .FirstOrDefault();
+                if (bypass != null && bypass.Bypass == 1)
+                {
+                    _context1.Sites.Where(s => s.SiteId == siteId).ToList().ForEach(site => site.Payroll = 2);
+                }
+                else
+                {
+                    _context1.Sites.Where(s => s.SiteId == siteId).ToList().ForEach(site => site.Payroll = 1);
+                }   
+
                 _context1.SaveChanges();
 
                 if (uploadedFiles.Count > 0)
@@ -271,7 +286,7 @@ namespace NHSP.Areas.Payroll.Controllers
                     ViewBag.SuccessMessage = $"{uploadedFiles.Count} file(s) uploaded successfully.";
                 }
 
-                return PartialView("_UploadPartial", pm);
+                return PartialView("_UploaddtrPartial", fm);
             }
             catch (Exception ex)
             {
@@ -280,7 +295,7 @@ namespace NHSP.Areas.Payroll.Controllers
             }
         }
         [HttpGet]
-        public IActionResult UploadPartial(int SiteId)
+        public IActionResult UploaddtrParital(int SiteId)
         {
             GetSession();
             if (HttpContext.Session.GetString(SessionId) == null)
@@ -307,7 +322,7 @@ namespace NHSP.Areas.Payroll.Controllers
                 SiteId = siteresult.SiteId,
                 SiteName = siteresult?.Sitename.ToString()
             };
-            return PartialView("_UploadPartial", fm);
+            return PartialView("_UploaddtrPartial", fm);
         }
         public IActionResult ViewPayroll()
         {
@@ -365,7 +380,7 @@ namespace NHSP.Areas.Payroll.Controllers
                     if (sestype.Contains("PAYROLL"))
                     {
                         var site = _context1.Sites
-                                    .Where(a => a.Status == "Active" && a.Payroll == 3 || a.Payroll == 5)
+                                    .Where(a => a.Status == "Active" && a.Payroll == 3)
                                     .Select(a => new
                                     {
                                         a.SiteId,
@@ -424,7 +439,7 @@ namespace NHSP.Areas.Payroll.Controllers
             }
         }
         [HttpPost]
-        public IActionResult Approve(int siteId)
+        public async Task<IActionResult> Approve(int siteId)
         {
             try
             {
@@ -434,6 +449,13 @@ namespace NHSP.Areas.Payroll.Controllers
                     return RedirectToAction("Login", "Home", new { area = (string)null });
                 }
                 int sesid = int.Parse(HttpContext.Session.GetString(SessionId));
+                var bypass = _context1.Users
+                    .Where(u => u.UserId == sesid)
+                    .Select(u => new
+                    {
+                        u.Bypass
+                    })
+                    .FirstOrDefault();                
                 DateTime? fdt = DateTime.ParseExact(DateTime.Now.ToString("MM-dd-yyyy HH:mm:ss"), "MM-dd-yyyy HH:mm:ss", CultureInfo.InvariantCulture);
                 var payrollstatus = _context1.Sites
                               .Where(s => s.SiteId == siteId && s.Status == "Active")
@@ -498,6 +520,14 @@ namespace NHSP.Areas.Payroll.Controllers
                             payrollFile.Status = 1;
                         }
 
+                        //var payroll = _context1.payroll
+                        //               .Where(pf => pf.SiteId == siteId && pf.Status == 4 && pf.FileType == "Payroll")
+                        //               .ToList();
+                        //foreach (var payrollFile in payroll)
+                        //{
+                        //    payrollFile.Status = 3;
+                        //}
+
                         var site = _context1.Sites.FirstOrDefault(s => s.SiteId == siteId);
                         if (site != null)
                         {
@@ -505,48 +535,87 @@ namespace NHSP.Areas.Payroll.Controllers
                         }
                         _context1.SaveChanges();
 
-                        return RedirectToAction("ViewPayroll", "Payroll");
-                    }
-                    if (payrollstatus.Payroll == 4)
-                    {
-                        var payrollFiles = _context1.payroll
-                                       .Where(pf => pf.SiteId == siteId && pf.Status == 1)
-                                       .ToList();
-                        foreach (var payrollFile in payrollFiles)
-                        {
-                            payrollFile.ApproveACC = sesid;
-                            payrollFile.ApproveACCDate = fdt;
-                            payrollFile.Status = 1;
-                        }
+                        //var files = await _context1.payroll
+                        //    .Where(p => p.SiteId == siteId && p.Status == 1 && p.FileType == "DTR")
+                        //    .OrderByDescending(p => p.AddedDate)
+                        //    .Select(a => new
+                        //    {
+                        //        a.FileId,
+                        //        a.FileName,
+                        //        a.SiteId
+                        //    })
+                        //    .ToListAsync();
 
-                        var site = _context1.Sites.FirstOrDefault(s => s.SiteId == siteId);
-                        if (site != null)
-                        {
-                            site.Payroll = 5;
-                        }
-                        _context1.SaveChanges();
+                        //if (files.Any())
+                        //{
+                        //    foreach (var item in files)
+                        //    {
+                        //        bool fileDeleted = await _fileUploadService.DeleteFileAsync(item.FileName);
 
-                        return RedirectToAction("ViewPayroll", "Payroll");
-                    }
-                    if (payrollstatus.Payroll == 5)
-                    {
-                        var payrollFiles = _context1.payroll
-                                       .Where(pf => pf.SiteId == siteId && pf.Status == 1)
-                                       .ToList();
-                        foreach (var payrollFile in payrollFiles)
-                        {
-                            payrollFile.FinalizedBy = sesid;
-                            payrollFile.Release = fdt;
-                            payrollFile.Status = 1;
-                        }
+                        //        if (fileDeleted)
+                        //        {
+                        //            var payrollFiles = await _context1.payroll
+                        //                .Where(p => p.FileName == item.FileName && p.SiteId == item.SiteId)
+                        //                .ToListAsync();
 
-                        var site = _context1.Sites.FirstOrDefault(s => s.SiteId == siteId);
-                        if (site != null)
-                        {
-                            site.Payroll = 6;
-                        }
-                        _context1.SaveChanges();
+                        //            if (payrollFiles.Any())
+                        //            {
+                        //                foreach (var payrollFile in payrollFiles)
+                        //                {
+                        //                    payrollFile.Status = 0;
+                        //                    _context1.payroll.Update(payrollFile);
+                        //                }
+                        //            }
+                        //            var sitefilestatus = await _context1.Sites
+                        //                .FirstOrDefaultAsync(a => a.SiteId == item.SiteId);
 
+                        //            if (sitefilestatus != null)
+                        //            {
+                        //                sitefilestatus.Payroll = 4;
+                        //                _context1.Sites.Update(sitefilestatus);
+                        //            }
+                        //            await _context1.SaveChangesAsync();
+
+                        //        }
+                        //        else
+                        //        {
+                        //            Console.WriteLine($"Failed to delete file '{item.FileName}'.");
+                        //            TempData["ErrorMessage"] = "Failed to delete the file.";
+                        //            return RedirectToAction("DashPayroll", "Payroll");
+                        //        }
+                        //    }
+                        //}
+
+                        //var prfiles = await _context1.payroll
+                        //           .Where(p => p.SiteId == siteId && p.Status == 4 && p.FileType == "Payroll")
+                        //           .OrderByDescending(p => p.AddedDate)
+                        //           .Select(a => new
+                        //           {
+                        //               a.FileId,
+                        //               a.FileName,
+                        //               a.SiteId
+                        //           })
+                        //           .ToListAsync();
+
+                        //if (prfiles.Any())
+                        //{
+                        //    foreach (var item in prfiles)
+                        //    {
+                        //        var payrollFiles = await _context1.payroll
+                        //            .Where(p => p.FileName == item.FileName && p.SiteId == item.SiteId && p.Status == 4)
+                        //            .ToListAsync();
+
+                        //        if (payrollFiles.Any())
+                        //        {
+                        //            foreach (var payrollFile in payrollFiles)
+                        //            {
+                        //                payrollFile.Status = 3;
+                        //                _context1.payroll.Update(payrollFile);
+                        //            }
+                        //        }
+                        //        await _context1.SaveChangesAsync();
+                        //    }
+                        //}
                         return RedirectToAction("ViewPayroll", "Payroll");
                     }
                 }
@@ -558,7 +627,7 @@ namespace NHSP.Areas.Payroll.Controllers
                 return StatusCode(500);
             }
         }
-        public IActionResult Decline(int siteId, string remarks)
+        public async Task<IActionResult> Decline(int siteId, string remarks)
         {
             try
             {
@@ -583,24 +652,72 @@ namespace NHSP.Areas.Payroll.Controllers
                 if (status != null)
                 {
                     var payrollFiles = _context1.payroll
-                                   .Where(pf => pf.SiteId == siteId);
+                                   .Where(pf => pf.SiteId == siteId && pf.Status == 1 && pf.FileType == "DTR");
                     foreach (var payrollFile in payrollFiles)
-                    {
-                        payrollFile.Status = 0;
+                    {                        
                         payrollFile.Remarks = remarks;
                     }
-                    _context1.SaveChanges();
 
                     var prstatus = _context1.Sites
                                    .Where(pf => pf.SiteId == siteId);
                     foreach (var pr in prstatus)
                     {
-                        pr.Payroll = 0;
+                        pr.Payroll = 4;
                     }
                     _context1.SaveChanges();
-                    return RedirectToAction("ViewPayroll", "Payroll");
+
                 }
-                return View();
+                var files = await _context1.payroll
+                            .Where(p => p.SiteId == siteId && p.Status == 1 && p.FileType == "DTR")
+                            .OrderByDescending(p => p.AddedDate)
+                            .Select(a => new
+                            {
+                                a.FileId,
+                                a.FileName,
+                                a.SiteId
+                            })
+                            .ToListAsync();
+
+                if (files.Any())
+                {
+                    foreach (var item in files)
+                    {
+                        bool fileDeleted = await _fileUploadService.DeleteFileAsync(item.FileName);
+
+                        if (fileDeleted)
+                        {
+                            var payrollFiles = await _context1.payroll
+                                .Where(p => p.FileName == item.FileName && p.SiteId == item.SiteId)
+                                .ToListAsync();
+
+                            if (payrollFiles.Any())
+                            {
+                                foreach (var payrollFile in payrollFiles)
+                                {
+                                    payrollFile.Status = 0;
+                                    _context1.payroll.Update(payrollFile);
+                                }
+                            }
+                            var sitefilestatus = await _context1.Sites
+                                .FirstOrDefaultAsync(a => a.SiteId == item.SiteId);
+
+                            if (sitefilestatus != null)
+                            {
+                                sitefilestatus.Payroll = 0;
+                                _context1.Sites.Update(sitefilestatus);
+                            }
+                            await _context1.SaveChangesAsync();
+                        }
+                        else
+                        {
+                            Console.WriteLine($"Failed to delete file '{item.FileName}'.");
+                            TempData["ErrorMessage"] = "Failed to delete the file.";
+                            return RedirectToAction("DashPayroll", "Payroll");
+                        }
+                    }
+                }
+
+                return RedirectToAction("ViewPayroll", "Payroll");
             }
             catch (Exception ex)
             {
@@ -780,8 +897,7 @@ namespace NHSP.Areas.Payroll.Controllers
         }
         public IActionResult MigrateUser()
         {
-            //try
-            //{
+
             GetSession();
             if (HttpContext.Session.GetString(SessionId) == null)
             {
@@ -847,7 +963,7 @@ namespace NHSP.Areas.Payroll.Controllers
                     UserStatus = "Active",
                     UserType = um.Usertype,
                     ContactNo = um.Contact_Number,
-                    SiteId = um.SiteId
+                    Bypass = um.SiteId
                 };
 
                 _context1.Users.Add(trans);
@@ -856,12 +972,6 @@ namespace NHSP.Areas.Payroll.Controllers
             _context1.SaveChanges();
 
             return RedirectToAction("Totable", "Payroll");
-            //}
-            //catch (Exception ex)
-            //{
-            //    Console.WriteLine("Error in Forward action: " + ex.Message);
-            //    return StatusCode(500);
-            //}
         }
         public IActionResult Sites()
         {
@@ -1031,14 +1141,50 @@ namespace NHSP.Areas.Payroll.Controllers
                 ViewBag.Layout = "Payroll";
                 ViewBag.SessionType = HttpContext.Session.GetString(SessionType);
 
-                var sites = _context1.Sites
-                            .Select(site => new
+                var payroll = _context1.Sites
+                            .GroupJoin(
+                                _context1.payroll.Where(p => p.FileType == "Payroll" && (p.Status == 2 || p.Status == 3 || p.Status == 4)),
+                                s => s.SiteId,
+                                p => p.SiteId,
+                                (s, payrollGroup1) => new { s, payrollGroup1 }
+                            )
+                            .SelectMany(
+                                x => x.payrollGroup1.DefaultIfEmpty(),
+                                (x, p1) => new { x.s, p1 }
+                            )
+                            .GroupJoin(
+                                _context1.payroll.Where(p => p.FileType == "DTR" && p.Status == 1),
+                                sp => sp.s.SiteId,
+                                p => p.SiteId,
+                                (sp, payrollGroup2) => new
+                                {
+                                    sp.s,
+                                    sp.p1,
+                                    p2 = payrollGroup2.OrderBy(p => p.AddedDate).FirstOrDefault()
+                                }
+                            )
+                            .Select(x => new
                             {
-                                site.SiteId,
-                                site.Sitename
-                            });
+                                x.s.SiteId,
+                                x.s.Sitename,
+                                x.s.Status,
+                                x.s.SiteSOM,
+                                x.s.SiteOM,
+                                x.s.SiteSCTK,
+                                x.s.Payroll,
 
-                ViewBag.Sites = sites;
+                                FileName = x.p1 != null ? x.p1.FileName : null,
+                                FileString = x.p1 != null ? x.p1.FileString : null,
+                                FileType = x.p1 != null ? x.p1.FileType : null,
+                                FileStatus = x.p1 != null ? x.p1.Status : null,
+
+                                FileAddedDate = x.p2 != null ? x.p2.AddedDate : null,
+                                FileApproveOMDate = x.p2 != null ? x.p2.ApproveOMDate : null,
+                                FileApproveSOMDate = x.p2 != null ? x.p2.ApproveSOMDate : null,
+                                FileApprovePODate = x.p2 != null ? x.p2.ApprovePODate : null
+                            })
+                            .ToList();
+                ViewBag.payroll = payroll;
                 return View();
             }
             catch (Exception ex)
@@ -1056,32 +1202,23 @@ namespace NHSP.Areas.Payroll.Controllers
 
                 if (HttpContext.Session.GetString(SessionId) == null)
                 {
-                    return RedirectToAction("Login", "Home", new { area = (string)null });
+                    return RedirectToAction("Login", "Home");
                 }
+                ModelState.Clear();
 
-                if (pm.UploadFile == null || pm.UploadFile.Length == 0)
+                var files = Request.Form.Files;
+                if (files == null || files.Count == 0)
                 {
-                    ModelState.AddModelError("UploadFile", "Please select a file to upload.");
+                    ModelState.AddModelError("UploadFile", "Please select file to upload.");
                     return PartialView("_AddPayrollPartial", pm);
                 }
 
-                var allowedExtensions = new[] { ".xls", ".xlsx", ".png", ".jpeg", ".jpg" };
-                var extension = Path.GetExtension(pm.UploadFile.FileName).ToLower();
-                if (!allowedExtensions.Contains(extension))
-                {
-                    ModelState.AddModelError("UploadFile", "Only .xls, .xlsx, .png, .jpeg, .jpg file types are allowed.");
-                    return PartialView("_AddPayrollPartial", pm);
-                }
+                var allowedExtensions = new[] { ".png", ".jpeg", ".jpg" };
 
-                var sitequery = _context1.Sites
+                var siteresult = _context1.Sites
                                 .Where(a => a.SiteId == siteId)
-                                .Select(a => new
-                                {
-                                    a.SiteId,
-                                    a.Sitename
-                                });
-
-                var siteresult = sitequery.FirstOrDefault();
+                                .Select(a => new { a.SiteId, a.Sitename })
+                                .FirstOrDefault();
 
                 if (siteresult == null)
                 {
@@ -1089,28 +1226,54 @@ namespace NHSP.Areas.Payroll.Controllers
                     return PartialView("_AddPayrollPartial", pm);
                 }
 
-                string fileformat;
-                if (extension == ".xlsx")
+                List<string> uploadedFiles = new List<string>();
+                int inc = 1;
+                foreach (var file in files)
                 {
-                    fileformat = Path.ChangeExtension(pm.UploadFile.FileName, ".xls");
+                    var extension = Path.GetExtension(file.FileName).ToLower();
+                    if (!allowedExtensions.Contains(extension))
+                    {
+                        ModelState.AddModelError("UploadFile", $"Invalid file type: {file.FileName}. Only .png, .jpeg, .jpg allowed.");
+                        return PartialView("_AddPayrollPartial", pm);
+                    }
+
+                    string fileformat = (extension == ".xlsx") ? Path.ChangeExtension(file.FileName, ".xls") : file.FileName;
+                    string fileName = $"{siteresult.SiteId}{Path.GetExtension(fileformat)}";
+
+                    var (filePath, rawfilename) = await _fileUploadPayroll.UploadFileAsync(file, fileName);
+
+                    if (string.IsNullOrEmpty(filePath))
+                    {
+                        ModelState.AddModelError("UploadFile", $"File upload failed: {file.FileName}");
+                        return PartialView("_AddPayrollPartial", pm);
+                    }
+
+                    _context1.payroll.Add(new payroll
+                    {
+                        FileName = rawfilename,
+                        FileString = filePath,
+                        FileType = "Payroll",
+                        SiteId = siteresult.SiteId,
+                        SiteName = StringEdit.RightStr(siteresult.Sitename),
+                        AddedBy = int.Parse(HttpContext.Session.GetString(SessionId)),
+                        AddedDate = DateTime.Now,
+                        Status = 2
+                    });
+
+                    uploadedFiles.Add(fileName);
+                    inc++;
                 }
-                else
+                var site = _context1.Sites.FirstOrDefault(s => s.SiteId == siteId);
+                if (site != null)
                 {
-                    fileformat = pm.UploadFile.FileName;
+                    site.Payroll = 4;
                 }
+                _context1.SaveChanges();
 
-                pm.FileName = siteresult.SiteId + Path.GetExtension(fileformat);
-                var (filePath, rawfilename) = await _fileUploadPayroll.UploadFileAsync(pm.UploadFile, pm.FileName);
-
-                if (!string.IsNullOrEmpty(filePath))
+                if (uploadedFiles.Count > 0)
                 {
                     ModelState.Clear();
-                    ViewBag.SuccessMessage = "Uploaded successfully.";
-                }
-                else
-                {
-                    ModelState.AddModelError("UploadFile", "File upload failed.");
-                    return PartialView("_AddPayrollPartial", pm);
+                    ViewBag.SuccessMessage = $"{uploadedFiles.Count} file(s) uploaded successfully.";
                 }
 
                 return PartialView("_AddPayrollPartial", pm);
@@ -1171,7 +1334,7 @@ namespace NHSP.Areas.Payroll.Controllers
                             .Where(a => a.SiteId == SiteId)
                             .Select(a => new
                             {
-                                SiteId = a.SiteId,
+                                a.SiteId,
                                 a.Sitename,
                                 a.Status,
                                 a.SiteSOM,
@@ -1202,24 +1365,34 @@ namespace NHSP.Areas.Payroll.Controllers
 
                 int sesid = int.Parse(HttpContext.Session.GetString(SessionId));
 
-                var sitequery = _context1.Sites
-                            .Where(a => a.Status == "Active" && (a.SiteSOM == sesid || a.SiteSCTK == sesid || a.SiteOM == sesid) || a.Sitename == "Repair")
+                var payroll = _context1.Sites
+                            .Where(s => s.SiteSCTK == sesid || s.SiteOM == sesid || s.SiteSOM == sesid)
                             .GroupJoin(
-                            _context1.payroll,
-                            site => site.SiteId,
-                            payroll => payroll.SiteId,
-                            (site, pg) => new RequestSites
-                            {
-                                SiteId = site.SiteId,
-                                Sitename = site.Sitename,
-                                Status = site.Status,
-                                SiteSOM = site.SiteSOM,
-                                SiteOM = site.SiteOM,
-                                SiteSCTK = site.SiteSCTK,
-                                PayrollStatus = pg.Select(p => p.Status).FirstOrDefault() ?? 0
-                            });
+                                _context1.payroll.Where(p => p.FileType == "Payroll" && p.Status == 2 || p.Status == 3 || p.Status == 4),
+                                s => s.SiteId,
+                                p => p.SiteId,
+                                (s, payrollGroup) => new { s, payrollGroup }
+                            )
+                            .SelectMany(
+                                x => x.payrollGroup.DefaultIfEmpty(),
+                                (x, p) => new
+                                {
+                                    x.s.SiteId,
+                                    x.s.Sitename,
+                                    x.s.Status,
+                                    x.s.SiteSOM,
+                                    x.s.SiteOM,
+                                    x.s.SiteSCTK,
+                                    x.s.Payroll,
+                                    FileName = p != null ? p.FileName : null,
+                                    FileString = p != null ? p.FileString : null,
+                                    FileType = p != null ? p.FileType : null,
+                                    FileStatus = p != null ? p.Status : null
+                                }
+                            )
+                            .ToList();
 
-                ViewBag.Site = sitequery.ToList();
+                ViewBag.payroll = payroll;
                 return View();
             }
             catch (Exception ex)
@@ -1283,7 +1456,7 @@ namespace NHSP.Areas.Payroll.Controllers
                 ViewBag.SessionType = HttpContext.Session.GetString(SessionType);
 
                 var files = await _context1.payroll
-                            .Where(p => p.SiteId == SiteId && p.Status == 1)
+                            .Where(p => p.SiteId == SiteId && p.Status == 1 && p.FileType == "DTR")
                             .OrderByDescending(p => p.AddedDate)
                             .Select(a => new
                             {
@@ -1309,8 +1482,8 @@ namespace NHSP.Areas.Payroll.Controllers
                             {
                                 foreach (var payrollFile in payrollFiles)
                                 {
-                                    payrollFile.Status = 0; 
-                                    _context1.payroll.Update(payrollFile); 
+                                    payrollFile.Status = 0;
+                                    _context1.payroll.Update(payrollFile);
                                 }
                             }
                             var sitefilestatus = await _context1.Sites
@@ -1319,9 +1492,10 @@ namespace NHSP.Areas.Payroll.Controllers
                             if (sitefilestatus != null)
                             {
                                 sitefilestatus.Payroll = 0;
-                                _context1.Sites.Update(sitefilestatus); 
+                                _context1.Sites.Update(sitefilestatus);
                             }
-                            await _context1.SaveChangesAsync(); 
+                            await _context1.SaveChangesAsync();
+
                         }
                         else
                         {
@@ -1329,6 +1503,37 @@ namespace NHSP.Areas.Payroll.Controllers
                             TempData["ErrorMessage"] = "Failed to delete the file.";
                             return RedirectToAction("DashPayroll", "Payroll");
                         }
+                    }
+                }
+
+                var prfiles = await _context1.payroll
+                           .Where(p => p.SiteId == SiteId && p.Status == 4 && p.FileType == "Payroll")
+                           .OrderByDescending(p => p.AddedDate)
+                           .Select(a => new
+                           {
+                               a.FileId,
+                               a.FileName,
+                               a.SiteId
+                           })
+                           .ToListAsync();
+
+                if (prfiles.Any())
+                {
+                    foreach (var item in prfiles)
+                    {
+                        var payrollFiles = await _context1.payroll
+                            .Where(p => p.FileName == item.FileName && p.SiteId == item.SiteId && p.Status == 4)
+                            .ToListAsync();
+
+                        if (payrollFiles.Any())
+                        {
+                            foreach (var payrollFile in payrollFiles)
+                            {
+                                payrollFile.Status = 3;
+                                _context1.payroll.Update(payrollFile);
+                            }
+                        }
+                        await _context1.SaveChangesAsync();
                     }
                 }
 
@@ -1394,10 +1599,8 @@ namespace NHSP.Areas.Payroll.Controllers
                 return StatusCode(500);
             }
         }
-        public async Task<IActionResult> PRpreview(int siteId)
+        public async Task<IActionResult> PRpreview(int siteId, string fileType)
         {
-            //try
-            //{
             GetSession();
             if (HttpContext.Session.GetString(SessionType) == null)
             {
@@ -1406,23 +1609,267 @@ namespace NHSP.Areas.Payroll.Controllers
             ViewBag.Layout = "Payroll";
             ViewBag.SessionType = HttpContext.Session.GetString(SessionType);
 
-            var prquery = _context1.payroll
-                        .Where(a => a.SiteId == siteId && a.Status == 1)
+            var dtrquery = _context1.payroll
+                        .Where(a => a.SiteId == siteId && a.Status == 1 && a.FileType == "DTR")
                         .Select(a => new PreviewModel
                         {
                             FileName = a.FileName,
                             SiteId = a.SiteId
                         }).ToList();
-            var prev = prquery;
 
-            return PartialView("_PRpreview", prev.ToList());
+            var prquery = _context1.payroll
+                        .Where(a => a.SiteId == siteId && (a.Status == 2 || a.Status == 3 || a.Status == 4) && a.FileType == "Payroll")
+                        .Select(a => new PreviewModel
+                        {
+                            FileName = a.FileName,
+                            SiteId = a.SiteId
+                        }).ToList();
+
+            if (fileType == "DTR")
+            {
+                ViewBag.prev = dtrquery;
+            }
+            if (fileType == "Payroll")
+            {
+                ViewBag.prev = prquery;
+            }
+
+            return PartialView("_PRpreview");
         }
-        //catch (Exception ex)
-        //{
-        //    Console.WriteLine("Error in PRpreview action: " + ex.Message);
-        //    return StatusCode(500);
-        //}
-    
+        public IActionResult Approvepr(int siteId)
+        {
+            try
+            {
+                GetSession();
+                if (HttpContext.Session.GetString(SessionType) == null)
+                {
+                    return RedirectToAction("Login", "Home");
+                }
+                ViewBag.Layout = "Payroll";
+                ViewBag.SessionType = HttpContext.Session.GetString(SessionType);
+                int sesid = int.Parse(HttpContext.Session.GetString(SessionId));
+
+                var payroll = _context1.payroll
+                                       .Where(pf => pf.SiteId == siteId && pf.Status == 2 && pf.FileType == "Payroll")
+                                       .ToList();
+                foreach (var payrollFile in payroll)
+                {
+                    payrollFile.Status = 3;
+                }
+
+                var site = _context1.Sites.FirstOrDefault(s => s.SiteId == siteId);
+                if (site != null)
+                {
+                    site.Payroll = 5;
+                }
+
+                _context1.SaveChanges();
+                return RedirectToAction("CheckPayroll", "Payroll");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error in Forward action: " + ex.Message);
+                return StatusCode(500);
+            }
+        }
+        public async Task<IActionResult> Deletepr(int SiteId)
+        {
+            try
+            {
+                GetSession();
+                if (HttpContext.Session.GetString(SessionType) == null)
+                {
+                    return RedirectToAction("Login", "Home");
+                }
+                ViewBag.Layout = "Payroll";
+                ViewBag.SessionType = HttpContext.Session.GetString(SessionType);
+
+                var files = await _context1.payroll
+                            .Where(p => p.SiteId == SiteId && (p.Status == 3 || p.Status == 4) && p.FileType == "Payroll")
+                            .OrderByDescending(p => p.AddedDate)
+                            .Select(a => new
+                            {
+                                a.FileId,
+                                a.FileName,
+                                a.SiteId
+                            })
+                            .ToListAsync();
+
+                if (files.Any())
+                {
+                    foreach (var item in files)
+                    {
+                        bool fileDeleted = await _fileUploadService.DeleteFileAsync(item.FileName);
+
+                        if (fileDeleted)
+                        {
+                            var payrollFiles = await _context1.payroll
+                                .Where(p => p.FileName == item.FileName && p.SiteId == item.SiteId && (p.Status == 3 || p.Status == 4))
+                                .ToListAsync();
+
+                            if (payrollFiles.Any())
+                            {
+                                foreach (var payrollFile in payrollFiles)
+                                {
+                                    payrollFile.Status = 0;
+                                    _context1.payroll.Update(payrollFile);
+                                }
+
+                            }
+                            await _context1.SaveChangesAsync();
+                        }
+                        else
+                        {
+                            Console.WriteLine($"Failed to delete file '{item.FileName}'.");
+                            TempData["ErrorMessage"] = "Failed to delete the file.";
+                            return RedirectToAction("DashPayroll", "Payroll");
+                        }
+                    }
+                    var site = _context1.Sites.FirstOrDefault(s => s.SiteId == SiteId);
+                    if (site != null)
+                    {
+                        site.Payroll = 4;
+                    }
+                }
+                return RedirectToAction("Addpayroll", "Payroll");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error in Forward action: " + ex.Message);
+                return StatusCode(500);
+            }
+        }
+        public IActionResult Declinepr(int siteId)
+        {
+            try
+            {
+                GetSession();
+                if (HttpContext.Session.GetString(SessionType) == null)
+                {
+                    return RedirectToAction("Login", "Home");
+                }
+                ViewBag.Layout = "Payroll";
+                ViewBag.SessionType = HttpContext.Session.GetString(SessionType);
+                int sesid = int.Parse(HttpContext.Session.GetString(SessionId));
+                DateTime? fdt = DateTime.ParseExact(DateTime.Now.ToString("MM-dd-yyyy HH:mm:ss"), "MM-dd-yyyy HH:mm:ss", CultureInfo.InvariantCulture);
+
+
+                var payroll = _context1.payroll
+                                       .Where(pf => pf.SiteId == siteId && pf.Status == 2 && pf.FileType == "Payroll")
+                                       .ToList();
+                foreach (var payrollFile in payroll)
+                {
+                    payrollFile.Status = 4;
+                }
+                var dtr = _context1.payroll
+                                       .Where(pf => pf.SiteId == siteId && pf.Status == 1 && pf.FileType == "DTR")
+                                       .ToList();
+                foreach (var dtrfile in dtr)
+                {
+                    dtrfile.ApprovePODate = fdt;
+                }
+
+                var site = _context1.Sites.FirstOrDefault(s => s.SiteId == siteId);
+                if (site != null)
+                {
+                    site.Payroll = 4;
+                }
+                _context1.SaveChanges();
+                return RedirectToAction("CheckPayroll", "Payroll");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error in Forward action: " + ex.Message);
+                return StatusCode(500);
+            }
+        }
+        public IActionResult UserManage()
+        {
+            try
+            {
+                GetSession();
+                if (HttpContext.Session.GetString(SessionType) == null)
+                {
+                    return RedirectToAction("Login", "Home");
+                }
+                ViewBag.Layout = "Payroll";
+                ViewBag.SessionType = HttpContext.Session.GetString(SessionType);
+
+                var user = _context1.Users
+                    .Where(a => a.UserStatus == "Active" && a.Position.Contains("site coor") || a.Position.Contains("time keep"))
+                    .Select(a => new
+                    {
+                        a.UserId,
+                        a.FirstName,
+                        a.LastName,
+                        a.Username,
+                        a.Password,
+                        a.Position,
+                        a.UserStatus,
+                        a.Bypass
+                    });
+
+                ViewBag.Userlist = user.ToList();
+
+                return View();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error in Forward action: " + ex.Message);
+                return StatusCode(500);
+            }
+        }
+        public IActionResult BypassOMapprove(int UserId)
+        {
+            try
+            {
+                GetSession();
+                if (HttpContext.Session.GetString(SessionType) == null)
+                {
+                    return RedirectToAction("Login", "Home");
+                }
+                ViewBag.Layout = "Payroll";
+                ViewBag.SessionType = HttpContext.Session.GetString(SessionType);
+
+                var user = _context1.Users.FirstOrDefault(s => s.UserId == UserId);
+                if (user != null && user.Bypass == null || user.Bypass == 0)
+                {
+                    user.Bypass = 1;
+                }
+                else
+                {
+                   user.Bypass = 0;
+                }
+                _context1.SaveChanges();
+
+                return RedirectToAction("UserManage", "Payroll");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error in Forward action: " + ex.Message);
+                return StatusCode(500);
+            }
+        }
+        [HttpPost]
+        public IActionResult ReviseDtr()
+        {
+            try
+            {
+                GetSession();
+                if (HttpContext.Session.GetString(SessionType) == null)
+                {
+                    return RedirectToAction("Login", "Home");
+                }
+                ViewBag.Layout = "Payroll";
+                ViewBag.SessionType = HttpContext.Session.GetString(SessionType);
+                return View();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error in Forward action: " + ex.Message);
+                return StatusCode(500);
+            }
+        }
         public IActionResult New()
         {
             try

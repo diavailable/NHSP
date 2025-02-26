@@ -27,6 +27,8 @@ using NHSP.Areas.Payroll.Models;
 using Microsoft.AspNetCore.Http.HttpResults;
 using static Azure.Core.HttpHeader;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using System.Text.Json;
+using System.Text;
 
 namespace NHSP.Controllers
 {
@@ -34,6 +36,7 @@ namespace NHSP.Controllers
     {
         private readonly NHSPContext _context1;
         private readonly DatabaseContext _context2;
+        private readonly HttpClient _httpClient;
         const string SessionName = "_Name";
         const string SessionLayout = "_Layout";
         const string SessionType = "_Type";
@@ -46,7 +49,7 @@ namespace NHSP.Controllers
         private readonly FileUploadService _fileUploadService;
         private readonly IWebHostEnvironment _hostingEnvironment;
 
-        public HomeController(IConfiguration configuration, IWebHostEnvironment hostingEnvironment, NHSPContext context1, DatabaseContext context2, FileUploadService fileUploadPayroll)
+        public HomeController(IConfiguration configuration, IWebHostEnvironment hostingEnvironment, NHSPContext context1, DatabaseContext context2, FileUploadService fileUploadPayroll, HttpClient httpClient)
         {
             _configuration = configuration;
             con = new SqlConnection(_configuration.GetConnectionString("pettycashConnection"));
@@ -55,6 +58,7 @@ namespace NHSP.Controllers
             _fileUploadPayroll = fileUploadPayroll;
             _hostingEnvironment = hostingEnvironment;
             _fileUploadService = new FileUploadService(Path.Combine(_hostingEnvironment.WebRootPath, "Files"));
+            _httpClient = httpClient;
         }
         public void GetSession() 
         {
@@ -73,6 +77,50 @@ namespace NHSP.Controllers
         [HttpPost]
         public async Task<IActionResult> Login(LoginModel m)
         {
+            //string apiUrl = "http://t0pnotch-001-site8.jtempurl.com/api/Values/payrollusers";
+
+            //var response = await _httpClient.GetAsync(apiUrl);
+
+            //if (!response.IsSuccessStatusCode)
+            //{
+            //    return View("Error");
+            //}
+
+            //string jsonString = await response.Content.ReadAsStringAsync();
+            //var users = JsonSerializer.Deserialize<List<Users>>(jsonString, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+            //var userfilter = users.Where(a => a.Username == m.Username && a.Password == m.Password && a.UserStatus == "Active")
+            //    .Select(a => new
+            //        {
+            //            a.UserId,
+            //            a.FirstName,
+            //            a.Username,
+            //            a.Password,
+            //            a.Position,
+            //            a.UserType
+            //        }).FirstOrDefault();
+
+            //    if (userfilter != null)
+            //    {
+            //        string position = StringEdit.NoSpaceUpper(userfilter.Position);
+            //        HttpContext.Session.SetString(SessionType, position);
+            //        HttpContext.Session.SetString(SessionId, userfilter.UserId.ToString());
+            //        HttpContext.Session.SetString(SessionName, userfilter.FirstName);
+
+            //        var usermodel = new UsersModel
+            //        {
+            //            UserName = userfilter.Username,
+            //            Password = userfilter.Password,
+            //            Position = position,
+            //            Id = userfilter.UserId.ToString()
+            //        };
+
+            //        return RedirectToAction("DashPayroll", "Payroll", new { area = "Payroll" });
+            //    }            
+            //else
+            //{
+            //    ModelState.AddModelError("Username", "Username / Password is invalid.");
+            //}
             if (ModelState.IsValid)
             {
                 if (con.State == ConnectionState.Closed)
@@ -110,7 +158,7 @@ namespace NHSP.Controllers
                                      c.Code
                                  };
                     var result1 = query1.FirstOrDefault();
-                    if(result1 != null)
+                    if (result1 != null)
                     {
                         string position = StringEdit.NoSpaceUpper(result1.Position);
                         HttpContext.Session.SetString(SessionType, position);
@@ -130,9 +178,7 @@ namespace NHSP.Controllers
                     {
                         ModelState.AddModelError("Username", "Username / Password is invalid.");
                     }
-                    //return PartialView("_Selection", usermodel);
                 }
-                //if (result2 != null)
                 else
                 {
                     string position = StringEdit.NoSpaceUpper(result2.Position);
@@ -148,12 +194,7 @@ namespace NHSP.Controllers
                         Id = result2.UserId.ToString()
                     };
                     return RedirectToAction("DashPayroll", "Payroll", new { area = "Payroll" });
-                    //return PartialView("_Selection", usermodel);
                 }
-                //else
-                //{
-                //    ModelState.AddModelError("Username", "Username / Password is incorrect.");
-                //}
             }
             return View(m);
         }
@@ -174,7 +215,7 @@ namespace NHSP.Controllers
             return View();
         }
         [HttpPost]
-        public IActionResult Register(Users u)
+        public async Task<IActionResult> Register(Users u)
         {
             var user = _context1.Users
                         .Where(a => a.Username == u.Username)

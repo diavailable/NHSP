@@ -13,7 +13,8 @@ namespace NHSP.Areas.Payroll.Models
     public class FileModel
     {
         [DataType(DataType.Upload)]
-        public IFormFile UploadFile { get; set; }
+        [Required(ErrorMessage = "Please select a file.")]
+        public List<IFormFile> UploadFile { get; set; }
         public string FileName { get; set; }
         public List<string> FileNames { get; set; }
         public int SiteId { get; set; }
@@ -25,6 +26,7 @@ namespace NHSP.Areas.Payroll.Models
         public string FileName { get; set; }
         public int? SiteId { get; set; }
         public string SiteName { get; set; }
+        public string FileType { get; set; }
     }
     public class ViewPayrollModel
     {

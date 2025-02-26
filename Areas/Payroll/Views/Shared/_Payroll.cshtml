@@ -33,32 +33,35 @@
                             <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
                                 @if ((string)ViewData["SessionType"] == "SITECOORDINATOR" || (string)ViewData["SessionType"] == "TIMEKEEPER")
                                 {
-                                    <li><a class="dropdown-item" asp-area="Payroll" asp-controller="Payroll" asp-action="RequestPayroll">Add DTR</a></li>
-                                    <li><a class="dropdown-item" asp-area="Payroll" asp-controller="Payroll" asp-action="CheckPayroll">Payroll</a></li>
+                                    <li><a class="dropdown-item" asp-area="Payroll" asp-controller="Payroll" asp-action="CheckPayroll">Check Payroll</a></li>
+                                    <li><a class="dropdown-item" asp-area="Payroll" asp-controller="Payroll" asp-action="SiteDTR">Site DTR</a></li>
                                     @* <li><a class="dropdown-item" asp-area="payroll" asp-controller="payroll" asp-action="totable">users</a></li> *@
                                 }
                                 else if ((string)ViewData["SessionType"] == "PAYROLLOFFICER" || (string)ViewData["SessionType"] == "ADMIN/ACCTG STAFF")
                                 {
                                     <li><a class="dropdown-item" asp-area="Payroll" asp-controller="Payroll" asp-action="AddPayroll">Add Payroll</a></li>
                                     <li><a class="dropdown-item" asp-area="Payroll" asp-controller="Payroll" asp-action="ViewPayroll">Approval</a></li>
-                                    <li><a class="dropdown-item" asp-area="Payroll" asp-controller="Payroll" asp-action="DeleteFile">Delete File</a></li>
-                                    <li><a class="dropdown-item" asp-area="Payroll" asp-controller="Payroll" asp-action="Completed">Completed</a></li>
+                                    @* <li><a class="dropdown-item" asp-area="Payroll" asp-controller="Payroll" asp-action="DeleteFile">Delete File</a></li>
+                                    <li><a class="dropdown-item" asp-area="Payroll" asp-controller="Payroll" asp-action="Completed">Completed</a></li> *@
                                     <li><a class="dropdown-item" asp-area="Payroll" asp-controller="Payroll" asp-action="UserAccount">User Approval</a></li>
+                                    <li><a class="dropdown-item" asp-area="Payroll" asp-controller="Payroll" asp-action="UserManage">User Management</a></li>
+                                    @* <li><a class="dropdown-item" asp-area="Payroll" asp-controller="Payroll" asp-action="MigrateSites">MigrateSites</a></li> *@
                                 }
                                 else if ((string)ViewData["SessionType"] == "OPERATIONSAREAMANAGER" || (string)ViewData["SessionType"] == "ASSISTANTOPERATIONSMANAGER")
                                 {
-                                    <li><a class="dropdown-item" asp-area="Payroll" asp-controller="Payroll" asp-action="RequestPayroll">Add DTR</a></li>
-                                    <li><a class="dropdown-item" asp-area="Payroll" asp-controller="Payroll" asp-action="ViewPayroll">Approval</a></li>
-                                    <li><a class="dropdown-item" asp-area="Payroll" asp-controller="Payroll" asp-action="DeleteFile">Delete File</a></li>
-                                    <li><a class="dropdown-item" asp-area="Payroll" asp-controller="Payroll" asp-action="Completed">Completed</a></li>
+                                    <li><a class="dropdown-item" asp-area="Payroll" asp-controller="Payroll" asp-action="CheckPayroll">Check Payroll</a></li>
+                                    <li><a class="dropdown-item" asp-area="Payroll" asp-controller="Payroll" asp-action="SiteDTR">Site DTR</a></li>
+                                    <li><a class="dropdown-item" asp-area="Payroll" asp-controller="Payroll" asp-action="ViewPayroll">Approval</a></li>                                    
+                                    @* <li><a class="dropdown-item" asp-area="Payroll" asp-controller="Payroll" asp-action="DeleteFile">Delete File</a></li>
+                                    <li><a class="dropdown-item" asp-area="Payroll" asp-controller="Payroll" asp-action="Completed">Completed</a></li> *@
                                 }
                                 else
                                 {
                                     <li><a class="dropdown-item" asp-area="Payroll" asp-controller="Payroll" asp-action="ViewPayroll">Approval</a></li>
-                                    <li><a class="dropdown-item" asp-area="Payroll" asp-controller="Payroll" asp-action="DeleteFile">Delete File</a></li>
+                                    @* <li><a class="dropdown-item" asp-area="Payroll" asp-controller="Payroll" asp-action="DeleteFile">Delete File</a></li>
                                     <li><a class="dropdown-item" asp-area="Payroll" asp-controller="Payroll" asp-action="Completed">Completed</a></li>
-                                    @* <li><a class="dropdown-item" asp-area="Payroll" asp-controller="Payroll" asp-action="MigrateUser">Users</a></li> *@
-                                    <li><a class="dropdown-item" asp-area="Payroll" asp-controller="Payroll" asp-action="MigrateSites">MigrateSites</a></li>
+                                    <li><a class="dropdown-item" asp-area="Payroll" asp-controller="Payroll" asp-action="MigrateUser">Users</a></li>
+                                    <li><a class="dropdown-item" asp-area="Payroll" asp-controller="Payroll" asp-action="MigrateSites">MigrateSites</a></li> *@
                                 }
                             </ul>
                         </li>

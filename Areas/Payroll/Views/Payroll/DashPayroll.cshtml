@@ -7,5 +7,143 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet" />
 </head>
-<h1 style="text-align:center">Payroll Dashboard</h1>
+
+<body>
+    @if ((string)ViewData["SessionType"] == "SITECOORDINATOR" || (string)ViewData["SessionType"] == "TIMEKEEPER")
+    {
+        <h1 style="text-align:center">Instructions (SC/TK)</h1>
+        <div class="container d-flex flex-column align-items-center">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Upload Site DTR</h3>
+                    </div>
+                    <div class="card-body">
+                        <p>
+                            1. Click on
+                            <button class="btn btn-outline-secondary btn-sm py-0" type="button">
+                                <i class="fas fa-bars"></i>
+                            </button>  button then Payroll -> Site DTR 
+                        </p>
+                        <p>2. If no site is listed, click <button class="btn btn-primary py-0" type="button">Assign Site</button>. You can scroll or search then select your site</p>
+                        <p>3. To upload DTR, Click <button class="btn btn-primary py-0" type="button">Upload</button> then select file you want to upload (press and hold a file to choose multiple files then tap select the other files to be uploaded).</p>
+                        <p>4. If uploaded succesfully, click <button class="btn btn-primary py-0" type="button">Preview</button> to preview the DTR uploaded</p>
+                        <p>5. Wait until the DTR is recieved by Accounting</p>
+                        <p>6. If the DTR is declined before forwarding to Accounting, you should be able to reupload DTR</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Approving Payroll</h3>
+                    </div>
+                    <div class="card-body">
+                        <p>
+                            1. When DTR is approved by Accounting, check if Payroll is already uploaded. Just click
+                            <button class="btn btn-outline-secondary btn-sm py-0" type="button">
+                                <i class="fas fa-bars"></i>
+                            </button>  button then Payroll -> Check Payroll
+                        </p>
+                        <p>2. Click <button class="btn btn-primary py-0" type="button">Preview</button> to see and check if the Payroll has corrections.</p>
+                        <p>3. If theres discrepancies, click <button class="btn btn-danger py-0" type="button">Decline</button></p>
+                        <p>4. If everything is correct, click <button class="btn btn-success py-0" type="button">Approve</button></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else if ((string)ViewData["SessionType"] == "OPERATIONSAREAMANAGER" || (string)ViewData["SessionType"] == "ASSISTANTOPERATIONSMANAGER")
+    {
+        <h1 style="text-align:center">Instructions (OM)</h1>
+        <div class="container d-flex flex-column align-items-center">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Approve DTR</h3>
+                    </div>
+                    <div class="card-body">
+                        <p>
+                            1. Click on
+                            <button class="btn btn-outline-secondary btn-sm py-0" type="button">
+                                <i class="fas fa-bars"></i>
+                            </button> button then Payroll -> Approval
+                        </p>
+                        <p>2. If no site is listed, click <button class="btn btn-primary py-0" type="button">Assign Site</button>. You can scroll or search then select your site</p>                    
+                        <p>3. If SC/TK has uploaded DTR, click <button class="btn btn-primary py-0" type="button">Preview</button> to preview the DTR uploaded</p>
+                        <p>4. <button class="btn btn-success py-0" type="button">Approve</button> Approve and <button class="btn btn-danger py-0" type="button">Decline</button>
+                        <p>5. If the DTR is declined you or SC/TK should be able to reupload DTR</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Upload Site DTR (if no SC/TK)</h3>
+                    </div>
+                    <div class="card-body">
+                        <p>
+                            1. Click on
+                            <button class="btn btn-outline-secondary btn-sm py-0" type="button">
+                                <i class="fas fa-bars"></i>
+                            </button>  button then Payroll -> Site DTR
+                        </p>
+                        <p>2. If no site is listed, click <button class="btn btn-primary py-0" type="button">Assign Site</button>. You can scroll or search then select your site</p>
+                        <p>3. To upload DTR, Click <button class="btn btn-primary py-0" type="button">Upload</button> then select file you want to upload (press and hold a file to choose multiple files then tap select the other files to be uploaded).</p>
+                        <p>4. If uploaded succesfully, click <button class="btn btn-primary py-0" type="button">Preview</button> to preview the DTR uploaded</p>
+                        <p>5. Wait until the DTR is recieved by Accounting</p>
+                        <p>5. If the DTR is declined before forwarding to Accounting, you should be able to reupload DTR</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Approving Payroll (if no SC/TK)</h3>
+                    </div>
+                    <div class="card-body">
+                        <p>
+                            1. When DTR is approved by Accounting, check if Payroll is already uploaded. Just click
+                            <button class="btn btn-outline-secondary btn-sm py-0" type="button">
+                                <i class="fas fa-bars"></i>
+                            </button>  button then Payroll -> Check Payroll
+                        </p>
+                        <p>2. Click <button class="btn btn-primary py-0" type="button">Preview</button> to see and check if the Payroll has corrections.</p>
+                        <p>3. If theres discrepancies, click <button class="btn btn-danger py-0" type="button">Decline</button></p>
+                        <p>4. If everything is correct, click <button class="btn btn-primary py-0" type="button">Approve</button></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else if((string)ViewData["SessionType"] == "SENIOROPERATIONHEAD")
+    {
+        <h1 style="text-align:center">Instructions (SOM)</h1>
+        <div class="container d-flex flex-column align-items-center">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Approve DTR Process</h3>
+                    </div>
+                    <div class="card-body">
+                        <p>
+                            1. Click on
+                            <button class="btn btn-outline-secondary btn-sm py-0" type="button">
+                                <i class="fas fa-bars"></i>
+                            </button>  button then Payroll -> Approval
+                        </p>
+                        <p>3. Click <button class="btn btn-primary py-0" type="button">Preview</button> to check if the DTR approved by SOM.</p>
+                        <p>3. If nothing is displayed, DTR is not yet approved by OM.</p>
+                        <p>4. Click <button class="btn btn-primary py-0" type="button">Approve</button> to forward DTR to Accounting</p>
+                        <p>5. If <button class="btn btn-danger py-0" type="button">Decline</button>, let SC/TK upload a new one</p>
+                    </div>
+                </div>
+            </div>            
+        </div>
+    }
+</body>

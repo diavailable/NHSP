@@ -1,6 +1,6 @@
 ﻿@model NHSP.Areas.Payroll.Models.ViewPayrollModel
 @{
-    ViewData["Title"] = "Payroll";
+    ViewData["Title"] = "DTR Approval";
 }
 <head>
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -38,7 +38,7 @@
                         <tr>
                             <td class="text-center text-nowrap">@item.Sitename</td>
                             <td class="text-center text-nowrap">
-                                <button type="button" class="btn btn-primary py-0" id="preview_@item.SiteId" data-siteid="@item.SiteId">Preview</button>
+                                <button type="button" class="btn btn-primary py-0" id="preview_@item.SiteId" data-siteid="@item.SiteId" data-filetype="DTR">Preview</button>
                             </td>
                             @switch (item.Payroll)
                             {
@@ -50,12 +50,6 @@
                                     break;
                                 case 3:
                                     <td class="text-center text-nowrap">Accounting</td>
-                                    break;
-                                case 4:
-                                    <td class="text-center text-nowrap">Accounting</td>
-                                    break;
-                                case 5:
-                                    <td class="text-center text-nowrap">Releasing</td>
                                     break;
                                 default:
                                     <td class="text-center text-nowrap">N/A</td>
@@ -116,8 +110,8 @@
                 else
                 {
                     <tr>
-                        <td class="text-center text-nowrap">if symptoms persists</td>
-                        <td class="text-center text-nowrap">consult it koi!?</td>
+                        <td class="text-center text-nowrap">if issue persist contact IT</td>
+                        <td class="text-center text-nowrap">https://www.facebook.com/adrian.d2nd</td>
                     </tr>
                 }
             </tbody>
@@ -174,11 +168,12 @@
         $('button[id^="preview_"]').click(function (event) {
             event.preventDefault();
             var siteid = $(this).data("siteid");
+            var filetype = $(this).data("filetype");
 
             $.ajax({
                 url: "/Payroll/Payroll/PRpreview",
                 type: "GET",
-                data: { siteId: siteid },
+                data: { siteId: siteid, fileType: filetype },
                 success: function (data) {
                     $("#previewModalBody").html(data);
                     var previewModal = new bootstrap.Modal(document.getElementById("previewModal"));

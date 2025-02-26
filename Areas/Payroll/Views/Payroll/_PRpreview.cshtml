@@ -8,14 +8,14 @@
     </div>
     <div class="zoom-container">      
         <div class="image-slider">
-            @if (Model != null)
+            @if (ViewBag.prev != null)
             {
                 int index = 0;
-                @foreach (var file in Model)
+                @foreach (var file in ViewBag.prev)
                 {
                     <div class="image-wrapper @(index == 0 ? "active" : "hidden")" data-index="@index">
                         <div class="image-box">
-                            <img class="zoomImage" src="@Url.Content("~/PayrollFiles/" + file.FileName)" alt="Payroll File"/>
+                            <img class="zoomImage" src="@Url.Content("~/PayrollFiles/" + file.FileName)" alt="Payroll File" />
                         </div>
                     </div>
                     index++;

@@ -1,0 +1,81 @@
+﻿@{
+    ViewData["Title"] = "User Activation";
+}
+<head>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet" />
+</head>
+<body>
+    <h1 style="text-align:center">Site DTR</h1>
+    <div>
+        <input class="form-control" type="text" id="search" placeholder="Search here" onkeyup="searchTable()">
+    </div>
+    <div style="overflow-x: auto; max-width: 100%;">
+        <table class="table table-striped table-bordered">
+            <thead>
+                <tr>
+                    <th class="text-center text-uppercase">ID</th>
+                    <th class="text-center text-uppercase">Name</th>
+                    <th class="text-center text-uppercase">Position</th>
+                    <th class="text-center text-uppercase">Bypass OM</th>
+                </tr>
+            </thead>
+            <tbody id="myTable">
+                @if (ViewBag.Userlist != null)
+                {
+                    foreach (var u in ViewBag.Userlist)
+                    {
+                        <tr>
+                            <td class="text-center text-nowrap">@u.UserId</td>
+                            <td class="text-center text-nowrap">@u.FirstName @u.LastName</td>
+                            <td class="text-center text-nowrap">@u.Position</td>
+                            <td class="text-center text-nowrap">
+                                <form asp-area="Payroll" asp-controller="Payroll" asp-action="BypassOMapprove" method="post">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="UserId" value="@u.UserId" />
+                                    @if (u.Bypass == 1)
+                                    {
+                                        <button type="submit" class="btn btn-danger py-0">Disable</button>
+                                    }
+                                    else
+                                    {
+                                        <button type="submit" class="btn btn-success py-0">Enable</button>
+                                    }
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</body>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+<script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+<script>
+    function searchTable() {
+        var input, filter, table, tr, td, i, txtValue;
+        input = document.getElementById("search");
+        filter = input.value.toUpperCase();
+        table = document.getElementById("myTable");
+        tr = table.getElementsByTagName("tr");
+
+        for (i = 0; i < tr.length; i++) {
+            tr[i].style.display = "none";
+            td = tr[i].getElementsByTagName("td");
+            for (var j = 0; j < td.length; j++) {
+                if (td[j]) {
+                    txtValue = td[j].textContent || td[j].innerText;
+                    if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                        tr[i].style.display = "";
+                        break;
+                    }
+                }
+            }
+        }
+    }
+</script>
